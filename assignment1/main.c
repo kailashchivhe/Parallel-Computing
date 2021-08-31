@@ -17,7 +17,7 @@ extern "C" {
 }
 #endif
 
-double calc_numerical_integration(int functionid, int a, int b, int n, int intensity)
+double calc_numerical_integration(int function_id, int a, int b, int n, int intensity)
 {
     float x;
     float t1 = (b - a) / n;
@@ -25,7 +25,7 @@ double calc_numerical_integration(int functionid, int a, int b, int n, int inten
     for( int i=0 ; i<n ; i++ )
     {
         x = a + ((i + 0.5) * t1);
-        switch(functionid)
+        switch(function_id)
         {
             case 1: sum += f1(x,intensity);
                 break;
