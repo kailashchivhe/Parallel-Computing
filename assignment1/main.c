@@ -17,11 +17,11 @@ extern "C" {
 }
 #endif
 
-double calc_numerical_integration(int function_id, int a, int b, int n, int intensity)
+double calc_numerical_integration(int function_id, float a, float b, float n, int intensity)
 {
     float x;
     float t1 = (b - a) / n;
-    float sum = 0;
+    double sum = 0.0L;
     for( int i=0 ; i<n ; i++ )
     {
         x = a + ((i + 0.5) * t1);
@@ -43,18 +43,19 @@ double calc_numerical_integration(int function_id, int a, int b, int n, int inte
 
 int main (int argc, char* argv[]) {
     
-    int function_id, a, b, n, intensity;
+    int function_id, intensity;
+    float a, b, n;
 
     if (argc < 6) {
         fprintf(stderr, "usage: %s <functionid> <a> <b> <n> <intensity>", argv[0]);
         return -1;
     }
     
-    function_id = atoi(argv[0]);
-    a = atoi(argv[1]);
-    b = atoi(argv[2]);
-    n = atoi(argv[3]);
-    intensity = atoi(argv[4]);
+    function_id = atoi(argv[1]);
+    a = strtof(argv[2],NULL);
+    b = strtof(argv[3],NULL);
+    n = strtof(argv[4],NULL);
+    intensity = atoi(argv[5]);
 
     clock_t t; // t represents clock ticks which is of type 'clock_t'
     t = clock(); // start clock
