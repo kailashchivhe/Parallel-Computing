@@ -3,7 +3,7 @@
 
 // gcc -pthread OR g++ -pthread
 void *f( void *p ){
-    printf ("ITCS5081 Parallel Computing a b c \n" );
+    printf ("ITCS5081 Parallel Computing %d \n", p );
     return NULL ;
 }
 
@@ -13,7 +13,7 @@ int main () {
     // create 5 threads
     for (int i =0; i < 5; ++ i )
     {
-        pthread_create( & tasks [i], NULL , f , NULL );
+        pthread_create( & tasks [i], NULL , f , i );
     }
     
     // wait for the 5 threads to complete
