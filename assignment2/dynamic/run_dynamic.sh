@@ -6,9 +6,9 @@ h=`hostname`
 
 echo running on ${h}
 
-if [ "$h" = "mba-i1.uncc.edu"  ];
+if [ "$h" = "gal-i1.uncc.edu"  ];
 then
-    echo Do not run this on the headnode of the cluster, use qsub!
+    echo Do not run this on the headnode of the cluster, use sbatch!
     exit 1
 fi
 

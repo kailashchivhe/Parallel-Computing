@@ -23,5 +23,5 @@ source ../params.sh
 
 for thread in ${THREADS};
 do
-	qsub -q mamba -d $(pwd) -l nodes=1:ppn=16 -v THREAD=${thread} run_dynamic.sh -l walltime=03:00:00
+    sbatch --partition=Centaurus --time=03:00:00 --nodes=1 --ntasks-per-node=16 --export=ALL,THREAD=${thread} run_dynamic.sh
 done 

@@ -1,1 +1,2 @@
-qsub -q mamba -d $(pwd) -l nodes=1:ppn=16 bench_sequential.sh -l walltime=02:00:00
+#!/bin/sh
+sbatch --partition=Centaurus --time=02:00:00 --nodes=1 --ntasks-per-node=16 bench_sequential.sh
