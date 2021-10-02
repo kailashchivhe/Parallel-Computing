@@ -32,12 +32,12 @@ int main (int argc, char* argv[]) {
     pthread_mutex_init(&mut, NULL);
     
     pthread_t* threads = (pthread_t*)(new pthread_t[n_thread]);
-    struct data d[n_thread];
+    struct data d;
     
     for (int i = 0; i < n_thread; i++){
-        d[0].tid = i;
-        d[0].n_thread = n_thread;
-        pthread_create(&threads[i], NULL, print, (void *)&d[0]);
+        d.tid = i;
+        d.n_thread = n_thread;
+        pthread_create(&threads[i], NULL, print, (void *)&d);
         //create the thread
     }
     
