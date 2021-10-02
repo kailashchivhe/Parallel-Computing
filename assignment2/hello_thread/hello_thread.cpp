@@ -32,18 +32,18 @@ int main (int argc, char* argv[]) {
     pthread_mutex_init(&mut, NULL);
     
     pthread_t* threads = (pthread_t*)(new pthread_t[n_thread]);
-    struct data d;
+    struct data d[n_thread];
     
     for (int i = 0; i < n_thread; i++){
-        d.tid = i;
-        d.n_thread = n_thread;
-        pthread_create(&threads[i], NULL, print, (void *)&d);
+        d[i].tid = i;
+        d[i].n_thread = n_thread;
+        pthread_create(&threads[i], NULL, print, (void *)&d[i]);
         //create the thread
     }
     
     for (int i = 0; i < n_thread; i++){
         //wait for all threads to finish
-        pthread_join(thread[i], NULL);
+        pthread_join(threads[i], NULL);
     }
     
     return 0;
