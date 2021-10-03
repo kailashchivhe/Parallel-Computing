@@ -33,20 +33,31 @@ struct Parameters{
     int nbthreads;
 };
 
+void calculateSum(struct Parameters *th )
+{
+    float x = (th->a + (i + 0.5) * ((th->b-th->a)/th->n));
+    switch(th->fnId)
+    {
+        case 1:
+            sum += (f1(x,th->intensity)*((th->b-th->a)/th->n));
+        break;
+        case 2:
+            sum += (f2(x,th->intensity)*((th->b-th->a)/th->n));
+        break;
+        case 3:
+            sum += (f3(x,th->intensity)*((th->b-th->a)/th->n));
+        break;
+        case 4:
+            sum += (f4(x,th->intensity)*((th->b-th->a)/th->n));
+        break;
+    }
+}
+
 void* static_worker_thread(void *value){
     struct Parameters *th = (struct Parameters*) value;
     pthread_mutex_lock(&mut);
     for(int i=th->start;i<th->end;i++){
-        float x = (th->a + (i + 0.5) * ((th->b-th->a)/th->n));
-        if(th->fnId == 1){
-            sum += (f1(x,th->intensity)*((th->b-th->a)/th->n));
-        }else if(th->fnId == 2){
-            sum += (f2(x,th->intensity)*((th->b-th->a)/th->n));
-        }else if(th->fnId == 3){
-            sum += (f3(x,th->intensity)*((th->b-th->a)/th->n));
-        }else if(th->fnId == 4){
-            sum += (f4(x,th->intensity)*((th->b-th->a)/th->n));
-        }
+        calculateSum(th);
     }
     pthread_mutex_unlock(&mut);
     pthread_exit(NULL);
@@ -57,16 +68,7 @@ void *static_worker_iter(void *value){
     struct Parameters *th =(struct Parameters *)value;
     for(int i=th->start; i<th->end; i++){
         pthread_mutex_lock(&mut);
-            float x = (th->a + (i + 0.5) * ((th->b-th->a)/th->n));
-            if(th->fnId == 1){
-                sum += (f1(x,th->intensity)*((th->b-th->a)/th->n));
-            }else if(th->fnId == 2){
-                sum += (f2(x,th->intensity)*((th->b-th->a)/th->n));
-            }else if(th->fnId == 3){
-                sum += (f3(x,th->intensity)*((th->b-th->a)/th->n));
-            }else if(th->fnId == 4){
-                sum += (f4(x,th->intensity)*((th->b-th->a)/th->n));
-            }
+        calculateSum(th);
         pthread_mutex_unlock(&mut);
     }
     pthread_exit(NULL);
