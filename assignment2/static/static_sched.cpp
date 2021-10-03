@@ -33,7 +33,7 @@ struct Parameters{
     int nbthreads;
 };
 
-void calculateSum(struct Parameters *th )
+void calculateSum(struct Parameters *th, int i )
 {
     float x = (th->a + (i + 0.5) * ((th->b-th->a)/th->n));
     switch(th->fnId)
@@ -57,7 +57,7 @@ void* static_worker_thread(void *value){
     struct Parameters *th = (struct Parameters*) value;
     pthread_mutex_lock(&mut);
     for(int i=th->start;i<th->end;i++){
-        calculateSum(th);
+        calculateSum(th,i);
     }
     pthread_mutex_unlock(&mut);
     pthread_exit(NULL);
@@ -68,7 +68,7 @@ void *static_worker_iter(void *value){
     struct Parameters *th =(struct Parameters *)value;
     for(int i=th->start; i<th->end; i++){
         pthread_mutex_lock(&mut);
-        calculateSum(th);
+        calculateSum(th,i);
         pthread_mutex_unlock(&mut);
     }
     pthread_exit(NULL);
