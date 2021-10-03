@@ -20,7 +20,8 @@ float f4(float x, int intensity);
 
 pthread_mutex_t mut;
 
-float sum = 0;
+float sum = 0.0f;
+
 struct Parameters{
     int start;
     int end;
@@ -46,8 +47,8 @@ void* static_worker_thread(void *value){
         }else if(th->fnId == 4){
             sum += (f4(x,th->intensity)*((th->b-th->a)/th->n));
         }
-        pthread_mutex_unlock(&mut);
     }
+    pthread_mutex_unlock(&mut);
     pthread_exit(NULL);
 }
 
@@ -77,15 +78,12 @@ int main (int argc, char* argv[]) {
         return -1;
     }
     
-    float fnId= atoi(argv[1]);
-    float a = atoi(argv[2]);
-    float b = atoi(argv[3]);
-    float n = atoi(argv[4]);
+    int fnId= atoi(argv[1]);
+    float a = atof(argv[2]);
+    float b = atof(argv[3]);
+    float n = atof(argv[4]);
     int intensity = atoi(argv[5]);
     int nbthreads = atoi(argv[6]);
-
-    int start=0;
-    int end=0;
 
     pthread_t *threads;
     threads = new pthread_t[nbthreads];
@@ -96,7 +94,7 @@ int main (int argc, char* argv[]) {
     
     pthread_mutex_init(&mut, NULL);
     
-    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::system_clock> startTimer = std::chrono::system_clock::now();
     
     //calculate your result here
     
@@ -104,7 +102,7 @@ int main (int argc, char* argv[]) {
         strt[i].fnId= fnId;
         strt[i].a = a;
         strt[i].b = b;
-        strt[i].n = (float)n;
+        strt[i].n = n;
         strt[i].intensity = intensity;
         strt[i].start = i * (n/nbthreads);
         strt[i].end = (i+1) * (n/nbthreads);
@@ -122,9 +120,9 @@ int main (int argc, char* argv[]) {
         pthread_join(threads[i], NULL);
     }
     
-    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::system_clock> endTimer = std::chrono::system_clock::now();
     
-    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::chrono::duration<double> elapsed_seconds = endTimer-startTimer;
     
     std::cout<<sum<<std::endl;
 
