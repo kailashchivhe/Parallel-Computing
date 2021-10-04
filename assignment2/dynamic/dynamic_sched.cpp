@@ -22,7 +22,7 @@ float f4(float x, int intensity);
 
 float global_result = 0, global_x_int;
 float a, b;
-float n;
+unsigned long n;
 double cpu_time;
 int func, intensity, granularity, work_done = 0, nbthreads;
 char* sync;
@@ -75,7 +75,7 @@ void* integrate_chunk_level(void *unused)
 		loop_end = get_end(loop_start);
 		for(int i = loop_start; i < loop_end; i++)
     	{	
-			chunk_int = (a + ((float)i + 0.5) * ((b - a) / n));
+			chunk_int = (a + ((float)i + 0.5) * ((b - a) / (float)n));
 			switch(func)
         	{
       			case 1: chunk_val = chunk_val + f1(chunk_int, intensity);
@@ -90,7 +90,7 @@ void* integrate_chunk_level(void *unused)
       		}
     	  	
 		}	
-		chunk_result = chunk_val * ((b - a)/n);
+		chunk_result = chunk_val * ((b - a)/(float)n);
 		pthread_mutex_lock(&global_result_lock);
 		if ( loop_end >= n-1)
     	  		work_done = 1;
