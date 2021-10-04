@@ -39,14 +39,9 @@ struct arguments
 
 int get_end(int start)
 {	
-	//pthread_mutex_lock(&loop_locks);
 	int endloop = (start + granularity);
 	if( endloop >= n - 1)
-		//pthread_mutex_lock(&global_result_lock);
-		//work_done = 1;
 		return n;
-		//pthread_mutex_unlock(&global_result_lock);
-	//pthread_mutex_unlock(&loop_locks);
 	return endloop;
 }
 
@@ -73,7 +68,7 @@ void* integrate_chunk_level(void *unused)
 		loop_start = get_start();
 		loop_end = get_end(loop_start);
 		for(int i = loop_start; i < loop_end; i++)
-    	{	
+    {	
 			chunk_int = (a + (i + 0.5) * ((b - a) / (float)n));
 			chunk_val = chunk_val + chunk_int;
 			switch(func)
