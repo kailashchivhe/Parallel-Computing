@@ -86,7 +86,7 @@ void* integrate_chunk_level(void *unused)
     	  	
 		}	
 		pthread_mutex_lock(&global_result_lock);
-		if ( endloop>=n-1)
+		if ( loop_end>=n-1)
     	  		work_done = 1;
     	pthread_mutex_unlock(&global_result_lock);
 	}
