@@ -20,6 +20,9 @@ bench: dynamic_sched
 test: dynamic_sched approx
 	./../test.sh dynamic cases.txt
 
+testtemp: dynamic_sched approx
+	./test.sh
+
 plot: 
 	./plot.sh
 
