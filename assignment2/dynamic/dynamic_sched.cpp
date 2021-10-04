@@ -21,8 +21,7 @@ float f4(float x, int intensity);
 #endif
 
 float global_result = 0, global_x_int;
-float a, b;
-unsigned long n;
+float a, b, n;
 double cpu_time;
 int func, intensity, granularity, work_done = 0, nbthreads;
 char* sync;
