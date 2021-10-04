@@ -20,6 +20,7 @@ float f4(float x, int intensity);
 }
 #endif
 
+
 float global_result = 0, global_x_int;
 float a, b;
 unsigned long n;
@@ -64,41 +65,6 @@ int get_start()
 	return temp;
 }
 
-//This function does the integration using iteration level mutual exclusion. The critical section is in the innermost loop.
-void* integrate_iteration_level(void * argument)
-{
-    struct arguments* arg = (struct arguments* )argument;
-    
-    while (work_done!= 1)
-    {
-  		arg->start = get_start();
-    	arg->end = get_end(arg->start);
-    	for(int i = arg->start; i < arg->end ; i++)
-    	{
-    		pthread_mutex_lock(&global_result_lock);
-			global_x_int = (arg->a + (i + 0.5) * ((arg->b - arg->a) / (float)arg->n));
-			global_x_val = global_x_val + global_x_int;
-			switch(arg->func)
-    		{
-    			case 1: global_result =  f1(global_x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
-				break;
-    	      	case 2: global_result = f2(global_x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
-				break;
-    	      	case 3: global_result = f3(global_x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
-				break;
-    	  	  	case 4: global_result = f4(global_x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
-				break;
-    	    	default: std::cout<<"\nWrong function id"<<std::endl;
-    	  	}
-    	  	if (i == arg->end-1 && endloop>=n-1)
-    	  		work_done = 1;
-    	  	pthread_mutex_unlock(&global_result_lock);
-    	  	
-    	  }
-    }
-    	  pthread_exit(NULL);
-}
-
 //This function does integration using chunk level mutual exclusion. The critical section is in the while loop for every computing thread.
 
 void* integrate_chunk_level(void *unused)
@@ -116,8 +82,10 @@ void* integrate_chunk_level(void *unused)
 			switch(func)
         	{
       			case 1: chunk_val = chunk_val + f1(chunk_int, intensity);
+      				 
 						break;
-        		case 2: chunk_val = chunk_val + f2(chunk_int, intensity);
+        		case 2: //std::cout << "\n\n\nVal= "<< chunk_val << std::endl;
+        			chunk_val = chunk_val + f2(chunk_int, intensity);
 						break;
         	  	case 3: chunk_val = chunk_val + f3(chunk_int, intensity);
 						break;
