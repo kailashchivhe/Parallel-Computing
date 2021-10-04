@@ -1,7 +1,7 @@
 ##dynamic loop test
 
 TEST13=$(./dynamic_sched 1 0 10 10000 1 1 thread 100 2> /dev/null)
-if ./approx $TEST13 50;
+if ../approx $TEST13 50;
 then
     echo oktest13
 else
@@ -10,7 +10,7 @@ else
 fi
 
 TEST14=$(./dynamic_sched 1 0 10 10000 1 4 thread 100 2> /dev/null)
-if ./approx $TEST14 50;
+if ../approx $TEST14 50;
 then
     echo oktest14
 else
@@ -19,7 +19,7 @@ else
 fi
 
 TEST15=$(./dynamic_sched 1 0 10 10000 1 8 thread 100 2> /dev/null)
-if ./approx $TEST15 50;
+if ../approx $TEST15 50;
 then
     echo oktest15
 else
@@ -28,7 +28,7 @@ else
 fi
 
 TEST16=$(./dynamic_sched 1 0 10 10000 1 16 thread 100 2> /dev/null)
-if ./approx $TEST16 50;
+if ../approx $TEST16 50;
 then
     echo oktest16
 else
@@ -37,7 +37,7 @@ else
 fi
 
 TEST17=$(./dynamic_sched 1 0 10 10000 1 1 chunk 100 2> /dev/null)
-if ./approx $TEST17 50;
+if ../approx $TEST17 50;
 then
     echo oktest17
 else
@@ -46,7 +46,7 @@ else
 fi
 
 TEST18=$(./dynamic_sched 1 0 10 10000 1 4 chunk 100 2> /dev/null)
-if ./approx $TEST18 50;
+if ../approx $TEST18 50;
 then
     echo oktest18
 else
@@ -55,7 +55,7 @@ else
 fi
 
 TEST19=$(./dynamic_sched 1 0 10 10000 1 8 chunk 100 2> /dev/null)
-if ./approx $TEST19 50;
+if ../approx $TEST19 50;
 then
     echo oktest19
 else
