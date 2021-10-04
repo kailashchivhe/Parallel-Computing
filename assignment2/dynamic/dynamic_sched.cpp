@@ -79,10 +79,8 @@ void* integrate_chunk_level(void *unused)
 			switch(func)
         	{
       			case 1: chunk_val = chunk_val + f1(chunk_int, intensity);
-      				 
 						break;
-        		case 2: //std::cout << "\n\n\nVal= "<< chunk_val << std::endl;
-        			chunk_val = chunk_val + f2(chunk_int, intensity);
+        		case 2: chunk_val = chunk_val + f2(chunk_int, intensity);
 						break;
         	  	case 3: chunk_val = chunk_val + f3(chunk_int, intensity);
 						break;
@@ -94,7 +92,7 @@ void* integrate_chunk_level(void *unused)
 		}	
 		chunk_result = chunk_val * ((b - a)/(float)n);
 		pthread_mutex_lock(&global_result_lock);
-		if ( loop_end >= n-1)
+		if(loop_end >= n-1)
     	  		work_done = 1;
     	pthread_mutex_unlock(&global_result_lock);
 	}
