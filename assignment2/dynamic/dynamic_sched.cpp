@@ -39,9 +39,14 @@ struct arguments
 
 int get_end(int start)
 {	
+	//pthread_mutex_lock(&loop_locks);
 	int endloop = (start + granularity);
 	if( endloop >= n - 1)
+		//pthread_mutex_lock(&global_result_lock);
+		//work_done = 1;
 		return n;
+		//pthread_mutex_unlock(&global_result_lock);
+	//pthread_mutex_unlock(&loop_locks);
 	return endloop;
 }
 
@@ -67,32 +72,36 @@ void* integrate_chunk_level(void *unused)
 	{
 		loop_start = get_start();
 		loop_end = get_end(loop_start);
-		for(int i = loop_start; i < loop_end; i++)
+		for(unsigned long i = loop_start; i < loop_end; i++)
     {	
-			chunk_int = (a + (i + 0.5) * ((b - a) / (float)n));
-			chunk_val = chunk_val + chunk_int;
+			chunk_int = (a + ((float)i + 0.5) * ((b - a) / (float)n));
+			
 			switch(func)
         	{
-      			case 1: chunk_result = f1(chunk_val, intensity) * ((b - a)/n);
+      			case 1: chunk_val = chunk_val + f1(chunk_int, intensity);
+      				 
 						break;
-        		case 2: chunk_result = f2(chunk_val, intensity) * ((b - a)/n);
+        		case 2: //std::cout << "\n\n\nVal= "<< chunk_val << std::endl;
+        			chunk_val = chunk_val + f2(chunk_int, intensity);
 						break;
-        	  	case 3: chunk_result = f3(chunk_val, intensity) * ((b - a)/n);
+        	  	case 3: chunk_val = chunk_val + f3(chunk_int, intensity);
 						break;
-      		  	case 4: chunk_result = f4(chunk_val, intensity) * ((b - a)/n);
+      		  	case 4: chunk_val = chunk_val + f4(chunk_int, intensity);
 						break;
         	  	default: std::cout<<"\nWrong function id"<<std::endl;
       		}
     	  	
 		}	
+		chunk_result = chunk_val * ((b - a)/(float)n);
 		pthread_mutex_lock(&global_result_lock);
-		if ( loop_end>=n-1)
+		if ( loop_end >= n-1)
     	  		work_done = 1;
     	pthread_mutex_unlock(&global_result_lock);
 	}
 	pthread_mutex_lock(&global_result_lock);
     global_result = global_result + chunk_result;
     pthread_mutex_unlock(&global_result_lock);
+    pthread_exit(NULL);
 }
 
 //This function does integration using thread level mutual exclusion where the every thread computes the result in the local variable and aggregates the result in the end.
@@ -112,23 +121,24 @@ void* integrate_thread_level(void * argument)
     	for(int i = arg->start; i < arg->end; i++)
     	{
     	  
-    		arg->x_int = (arg->a + (i + 0.5) * ((arg->b - arg->a) / (float)arg->n));
-			arg->x_val = arg->x_val + arg->x_int;
+    		arg->x_int = (arg->a + ((float)i + 0.5) * ((arg->b - arg->a) / (float)arg->n));
+			
 			switch(arg->func)
     		{
-      			case 1: arg->result = f1(arg->x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
+      			case 1:arg->x_val = arg->x_val + f1(arg->x_int,arg->intensity); 
 	      		break;
-          		case 2: arg->result = f2(arg->x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
+          		case 2: arg->x_val = arg->x_val + f2(arg->x_int,arg->intensity); 
 	      		break;
-          		case 3: arg->result = f3(arg->x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
+          		case 3: arg->x_val = arg->x_val + f3(arg->x_int,arg->intensity); 
 	      		break;
-      	  		case 4: arg->result = f4(arg->x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
+      	  		case 4: arg->x_val = arg->x_val + f4(arg->x_int,arg->intensity); 
 	      		break;
             	default: std::cout<<"\nWrong function id"<<std::endl;
       	 	}
     	}
+    	arg->result = arg->x_val * ((arg->b - arg->a)/arg->n);
     pthread_mutex_lock(&global_result_lock);
-		if (endloop>=n-1)
+		if (arg->end>=n-1)
     	  		work_done = 1;
     pthread_mutex_unlock(&global_result_lock);
     }
