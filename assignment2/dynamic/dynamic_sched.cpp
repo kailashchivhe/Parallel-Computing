@@ -1,9 +1,11 @@
-#include <iostream>
-#include <chrono>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <vector>
+#include<iostream>
+#include<string.h>
+#include<pthread.h>
+#include<stdlib.h>
+#include<math.h>
+#include<chrono>
+#include<stdio.h>
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,6 +64,41 @@ int get_start()
 	return temp;
 }
 
+//This function does the integration using iteration level mutual exclusion. The critical section is in the innermost loop.
+void* integrate_iteration_level(void * argument)
+{
+    struct arguments* arg = (struct arguments* )argument;
+    
+    while (work_done!= 1)
+    {
+  		arg->start = get_start();
+    	arg->end = get_end(arg->start);
+    	for(int i = arg->start; i < arg->end ; i++)
+    	{
+    		pthread_mutex_lock(&global_result_lock);
+			global_x_int = (arg->a + (i + 0.5) * ((arg->b - arg->a) / (float)arg->n));
+			global_x_val = global_x_val + global_x_int;
+			switch(arg->func)
+    		{
+    			case 1: global_result =  f1(global_x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
+				break;
+    	      	case 2: global_result = f2(global_x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
+				break;
+    	      	case 3: global_result = f3(global_x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
+				break;
+    	  	  	case 4: global_result = f4(global_x_val, arg->intensity) * ((arg->b - arg->a)/arg->n);
+				break;
+    	    	default: std::cout<<"\nWrong function id"<<std::endl;
+    	  	}
+    	  	if (i == arg->end-1 && endloop>=n-1)
+    	  		work_done = 1;
+    	  	pthread_mutex_unlock(&global_result_lock);
+    	  	
+    	  }
+    }
+    	  pthread_exit(NULL);
+}
+
 //This function does integration using chunk level mutual exclusion. The critical section is in the while loop for every computing thread.
 
 void* integrate_chunk_level(void *unused)
@@ -92,7 +129,7 @@ void* integrate_chunk_level(void *unused)
 		}	
 		chunk_result = chunk_val * ((b - a)/(float)n);
 		pthread_mutex_lock(&global_result_lock);
-		if(loop_end >= n-1)
+		if ( loop_end >= n-1)
     	  		work_done = 1;
     	pthread_mutex_unlock(&global_result_lock);
 	}
@@ -143,13 +180,13 @@ void* integrate_thread_level(void * argument)
     pthread_exit(NULL);
 }
 
-int main (int argc, char* argv[]) {
 
+int main (int argc, char* argv[])
+{
   if (argc < 9) {
     std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads> <sync> <granularity>"<<std::endl;
     return -1;
   }
-
   func = atoi(argv[1]);
   a = atof(argv[2]);
   b = atof(argv[3]);
