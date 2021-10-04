@@ -20,7 +20,6 @@ float f4(float x, int intensity);
 }
 #endif
 
-
 float global_result = 0, global_x_int;
 float a, b;
 unsigned long n;
@@ -66,26 +65,22 @@ int get_start()
 }
 
 //This function does integration using chunk level mutual exclusion. The critical section is in the while loop for every computing thread.
-
 void* integrate_chunk_level(void *unused)
 {
-	float chunk_result = 0, chunk_int, chunk_val=0;
+	float chunk_result = 0, chunk_int=0.0f, chunk_val=0;
 	unsigned long loop_end, loop_start;
 	while(work_done != 1)
 	{
 		loop_start = get_start();
 		loop_end = get_end(loop_start);
-		for(unsigned long i = loop_start; i < loop_end; i++)
-    {	
+		for(int i = loop_start; i < loop_end; i++)
+    	{	
 			chunk_int = (a + ((float)i + 0.5) * ((b - a) / (float)n));
-			
 			switch(func)
         	{
       			case 1: chunk_val = chunk_val + f1(chunk_int, intensity);
-      				 
 						break;
-        		case 2: //std::cout << "\n\n\nVal= "<< chunk_val << std::endl;
-        			chunk_val = chunk_val + f2(chunk_int, intensity);
+        		case 2: chunk_val = chunk_val + f2(chunk_int, intensity);
 						break;
         	  	case 3: chunk_val = chunk_val + f3(chunk_int, intensity);
 						break;
@@ -108,7 +103,6 @@ void* integrate_chunk_level(void *unused)
 }
 
 //This function does integration using thread level mutual exclusion where the every thread computes the result in the local variable and aggregates the result in the end.
-
 void* integrate_thread_level(void * argument)
 {
     struct arguments* arg = (struct arguments* )argument;
@@ -148,54 +142,52 @@ void* integrate_thread_level(void * argument)
     pthread_exit(NULL);
 }
 
-
 int main (int argc, char* argv[])
 {
-  if (argc < 9) {
-    std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads> <sync> <granularity>"<<std::endl;
-    return -1;
-  }
-  func = atoi(argv[1]);
-  a = atof(argv[2]);
-  b = atof(argv[3]);
-  n = atof(argv[4]);
-  intensity = atoi(argv[5]);
-  nbthreads = atoi(argv[6]);
-  sync = argv[7];
+	if (argc < 9) {
+		std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads> <sync> <granularity>"<<std::endl;
+		return -1;
+	}
+	func = atoi(argv[1]);
+	a = atof(argv[2]);
+	b = atof(argv[3]);
+	n = atof(argv[4]);
+	intensity = atoi(argv[5]);
+	nbthreads = atoi(argv[6]);
+	sync = argv[7];
 	granularity = atoi(argv[8]);
-  pthread_t *threads;
+	pthread_t *threads;
 	struct arguments* arg;
-	
-  threads = (pthread_t *)malloc(nbthreads * sizeof(pthread_t));
-  arg = (struct arguments*)malloc(nbthreads * sizeof(arguments));
+		
+	threads = (pthread_t *)malloc(nbthreads * sizeof(pthread_t));
+	arg = (struct arguments*)malloc(nbthreads * sizeof(arguments));
+		
+	std::chrono::time_point<std::chrono::system_clock> clock_start = std::chrono::system_clock::now();
     
-  std::chrono::time_point<std::chrono::system_clock> clock_start = std::chrono::system_clock::now();
     
-    
-  if ( strcmp(sync, "thread") == 0)
-  {
-    for ( int j = 0; j < nbthreads; j++)
-    {
-    	arg[j].a = a;
-    	arg[j].b = b;
-    	arg[j].intensity =intensity;
-    	arg[j].func = func;
-    	arg[j].n = n;
-    	pthread_create(&threads[j], NULL, integrate_thread_level, (void *)&(arg[j])); 
-    }
-	  for ( int i = 0; i < nbthreads; i++)
-    {
-    	pthread_join(threads[i], NULL);
-    }
-    for( int k = 0; k < nbthreads; k++)
-    {
-	    pthread_mutex_lock(&global_result_lock);
-    	global_result += arg[k].result;
-	    pthread_mutex_unlock(&global_result_lock);
-    }
-  }
-  else if( strcmp(sync, "chunk") == 0)
- 	{
+	if ( strcmp(sync, "thread") == 0)
+	{
+		for ( int j = 0; j < nbthreads; j++)
+		{
+			arg[j].a = a;
+			arg[j].b = b;
+			arg[j].intensity =intensity;
+			arg[j].func = func;
+			arg[j].n = n;
+			pthread_create(&threads[j], NULL, integrate_thread_level, (void *)&(arg[j])); 
+		}
+		for ( int i = 0; i < nbthreads; i++)
+		{
+			pthread_join(threads[i], NULL);
+		}
+		for( int k = 0; k < nbthreads; k++)
+		{
+			pthread_mutex_lock(&global_result_lock);
+			global_result += arg[k].result;
+			pthread_mutex_unlock(&global_result_lock);
+		}
+	}
+  	else if( strcmp(sync, "chunk") == 0){
  		for(int i = 0; i < nbthreads; i++)
  		{
  			pthread_create(&threads[i], NULL, integrate_chunk_level, NULL);
@@ -205,9 +197,8 @@ int main (int argc, char* argv[])
  		{
  			pthread_join(threads[i], NULL);
  		}
- 	}
- 	
- 	std::chrono::time_point<std::chrono::system_clock> clock_end = std::chrono::system_clock::now();
+	}
+  std::chrono::time_point<std::chrono::system_clock> clock_end = std::chrono::system_clock::now();
   std::chrono::duration<double>diff = clock_end - clock_start;
   std::cout<<global_result;
   std::cerr<<diff.count();
