@@ -20,7 +20,7 @@ float f4(float x, int intensity);
 }
 #endif
 
-float global_result = 0, global_x_int;
+double global_result = 0, global_x_int;
 float a, b, n;
 double cpu_time;
 int func, intensity, granularity, work_done = 0, nbthreads;
@@ -66,15 +66,16 @@ int get_start()
 //This function does integration using chunk level mutual exclusion. The critical section is in the while loop for every computing thread.
 void* integrate_chunk_level(void *unused)
 {
-	float chunk_result = 0.0f, chunk_int=0.0f, chunk_val=0.0f;
-	unsigned long loop_end, loop_start;
+	double chunk_result = 0.0f, chunk_int=0.0f, chunk_val=0.0f;
+	int loop_end, loop_start;
+	float t1 = (b - a) / n;
 	while(work_done != 1)
 	{
 		loop_start = get_start();
 		loop_end = get_end(loop_start);
 		for(int i = loop_start; i < loop_end; i++)
     	{	
-			chunk_int = (a + ((float)i + 0.5) * ((b - a) / (float)n));
+			chunk_int = a + (((float)i + 0.5) * t1 );
 			switch(func)
         	{
       			case 1: chunk_val = chunk_val + f1(chunk_int, intensity);
@@ -89,7 +90,7 @@ void* integrate_chunk_level(void *unused)
       		}
     	  	
 		}	
-		chunk_result = chunk_val * ((b - a)/(float)n);
+		chunk_result = chunk_val * t1;
 		pthread_mutex_lock(&global_result_lock);
 		if ( loop_end >= n-1)
     	  		work_done = 1;
