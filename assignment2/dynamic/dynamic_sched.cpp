@@ -20,12 +20,12 @@ float f4(float x, int intensity);
 }
 #endif
 
-double global_result = 0, global_x_int;
+double global_result = 0.0f;
 float a, b, n;
 double cpu_time;
 int func, intensity, granularity, work_done = 0, nbthreads;
 char* sync;
-unsigned long startloop=0, endloop;
+int startloop=0, endloop;
 float result = 0, global_x_val ;
 
 pthread_mutex_t loop_locks, global_result_lock, iteration_lock;
@@ -33,21 +33,16 @@ pthread_mutex_t loop_locks, global_result_lock, iteration_lock;
 struct arguments
 {
     float a, b;
-    unsigned long n, start, end;
-    float result, x_val=0, x_int;
+    int n, start, end;
+    float result, x_val, x_int;
     int intensity, func;
 };
 
 int get_end(int start)
 {	
-	//pthread_mutex_lock(&loop_locks);
 	int endloop = (start + granularity);
 	if( endloop >= n - 1)
-		//pthread_mutex_lock(&global_result_lock);
-		//work_done = 1;
 		return n;
-		//pthread_mutex_unlock(&global_result_lock);
-	//pthread_mutex_unlock(&loop_locks);
 	return endloop;
 }
 
@@ -66,7 +61,7 @@ int get_start()
 //This function does integration using chunk level mutual exclusion. The critical section is in the while loop for every computing thread.
 void* integrate_chunk_level(void *unused)
 {
-	double chunk_result = 0.0f, chunk_int=0.0f, chunk_val=0.0f;
+	float chunk_result = 0.0f, chunk_int=0.0f, chunk_val=0.0f;
 	int loop_end, loop_start;
 	float t1 = (b - a) / n;
 	while(work_done != 1)
@@ -92,7 +87,7 @@ void* integrate_chunk_level(void *unused)
 		}	
 		chunk_result = chunk_val * t1;
 		pthread_mutex_lock(&global_result_lock);
-		if ( loop_end >= n-1)
+		if ( loop_end >= (n-1))
     	  		work_done = 1;
     	pthread_mutex_unlock(&global_result_lock);
 	}
