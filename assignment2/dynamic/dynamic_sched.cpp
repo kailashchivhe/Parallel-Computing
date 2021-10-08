@@ -20,7 +20,7 @@ float f4(float x, int intensity);
 }
 #endif
 
-double global_result = 0.0f;
+float global_result = 0.0f;
 float a, b, n;
 double cpu_time;
 int func, intensity, granularity, work_done = 0, nbthreads;
@@ -70,7 +70,7 @@ void* integrate_chunk_level(void *unused)
 		loop_end = get_end(loop_start);
 		for(int i = loop_start; i < loop_end; i++)
     	{	
-			chunk_int = a + (((float)i + 0.5) * t1 );
+			chunk_int = a + ((i + 0.5) * t1 );
 			switch(func)
         	{
       			case 1: chunk_val = chunk_val + f1(chunk_int, intensity);
@@ -143,6 +143,21 @@ int main (int argc, char* argv[])
 		std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads> <sync> <granularity>"<<std::endl;
 		return -1;
 	}
+	global_result = 0.0f;
+	a = 0.0f;
+	b = 0.0f; 
+	n = 0.0f;
+	cpu_time = 0;
+	func = 0;
+       	intensity = 0;
+       	granularity = 0;
+	work_done = 0;
+       	nbthreads = 0;
+	startloop = 0; 
+	endloop = 0;
+	result = 0.0f;
+       	global_x_val = 0.0f;
+
 	func = atoi(argv[1]);
 	a = atof(argv[2]);
 	b = atof(argv[3]);
@@ -193,9 +208,12 @@ int main (int argc, char* argv[])
  			pthread_join(threads[i], NULL);
  		}
 	}
+  pthread_mutex_destroy(&loop_locks);
+  pthread_mutex_destroy(&global_result_lock);
+  pthread_mutex_destroy(&iteration_lock);
   std::chrono::time_point<std::chrono::system_clock> clock_end = std::chrono::system_clock::now();
   std::chrono::duration<double>diff = clock_end - clock_start;
-  std::cout<<global_result;
+  printf("%f",global_result);
   std::cerr<<diff.count();
   return 0;
 }
