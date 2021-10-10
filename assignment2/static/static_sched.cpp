@@ -89,6 +89,11 @@ void *iteration_sync(void *argument)
 int main(int argc, char *argv[])
 {
 
+  if (argc < 7) {
+    std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads>"<<std::endl;
+    return -1;
+  }
+  
   float final_result = 0, a, b, local_t1;
   double cpu_time;
   int func, intensity, nbthreads, n;
