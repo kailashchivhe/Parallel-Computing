@@ -6,7 +6,7 @@ using namespace std;
 
 struct data{
     int tid;
-    int n_thread;
+    int total_threads;
 };
 
 pthread_mutex_t mut;
@@ -14,9 +14,9 @@ pthread_mutex_t mut;
 void* print(void *ptr){
     struct data *local = (struct data *) ptr;
     int t_id = local->tid;
-    int n_thread = local->n_thread;
+    int total_threads = local->total_threads;
     pthread_mutex_lock(&mut);
-    cout << "I am thread " << t_id << " in " << n_thread << endl;
+    cout << "I am thread " << t_id << " in " << total_threads << endl;
     pthread_mutex_unlock(&mut);
     return NULL;
 }
@@ -28,21 +28,19 @@ int main (int argc, char* argv[]) {
         return -1;
     }
     
-    int n_thread = atoi(argv[1]);
+    int total_threads = atoi(argv[1]);
     pthread_mutex_init(&mut, NULL);
     
-    pthread_t* threads = (pthread_t*)(new pthread_t[n_thread]);
-    struct data d[n_thread];
+    pthread_t* threads = (pthread_t*)(new pthread_t[total_threads]);
+    struct data d[total_threads];
     
-    for (int i = 0; i < n_thread; i++){
+    for (int i = 0; i < total_threads; i++){
         d[i].tid = i;
-        d[i].n_thread = n_thread;
+        d[i].total_threads = total_threads;
         pthread_create(&threads[i], NULL, print, (void *)&d[i]);
-        //create the thread
     }
     
-    for (int i = 0; i < n_thread; i++){
-        //wait for all threads to finish
+    for (int i = 0; i < total_threads; i++){
         pthread_join(threads[i], NULL);
     }
     
