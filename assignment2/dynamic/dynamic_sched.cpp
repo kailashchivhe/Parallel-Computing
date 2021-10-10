@@ -1,10 +1,12 @@
-#include<iostream>
-#include<string.h>
-#include<pthread.h>
-#include<stdlib.h>
-#include<math.h>
-#include<chrono>
-#include<stdio.h>
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cstdlib>
+#include <string.h>
+#include <chrono>
+#include <cmath>
+ 
+using namespace std;
 
 
 #ifdef __cplusplus
@@ -20,200 +22,282 @@ float f4(float x, int intensity);
 }
 #endif
 
-float global_result = 0.0f;
-float a, b, n;
-double cpu_time;
-int func, intensity, granularity, work_done = 0, nbthreads;
-char* sync;
-int startloop=0, endloop;
-float result = 0, global_x_val ;
-
-pthread_mutex_t loop_locks, global_result_lock, iteration_lock;
-
-struct arguments
-{
-    float a, b;
-    int n, start, end;
-    float result, x_val, x_int;
-    int intensity, func;
+using seconds = chrono::seconds;
+using check_time = std::chrono::high_resolution_clock;
+ 
+struct my_struct{
+  string sync;
+  float a, b, mid;
+  int begin, end,functionid,intensity, n;
 };
+ 
+//global variables
+pthread_mutex_t mut,comp_mut;
+float total_sum = 0.0, mid =0.0;
+int computations_left = 0, n,global_begin=0, global_end=0, granularity=0;
 
-int get_end(int start)
-{	
-	int endloop = (start + granularity);
-	if( endloop >= n - 1)
-		return n;
-	return endloop;
-}
-
-int get_start()
+bool done()
 {
-	int temp;
-	pthread_mutex_lock(&loop_locks);
-	temp = startloop;
-	startloop = startloop + granularity;
-	if (startloop + granularity > n)
-		work_done = 1;
-	pthread_mutex_unlock(&loop_locks);
-	return temp;
+  pthread_mutex_lock(&comp_mut);
+ 
+  if(computations_left == 0)
+ {
+    pthread_mutex_unlock(&comp_mut);
+ 
+    return true;
+  }
+  else
+  {
+      if(computations_left < granularity)
+      {
+         computations_left = 0;
+      }
+      else
+      {
+          computations_left = computations_left - granularity;
+      } 
+       pthread_mutex_unlock(&comp_mut);
+       return false;
+   }
+ 
 }
-
-//This function does integration using chunk level mutual exclusion. The critical section is in the while loop for every computing thread.
-void* integrate_chunk_level(void *unused)
+ 
+ 
+void getnext (int *begin, int *end)
 {
-	float chunk_result = 0.0f, chunk_int=0.0f, chunk_val=0.0f;
-	int loop_end, loop_start;
-	float t1 = (b - a) / n;
-	while(work_done != 1)
-	{
-		loop_start = get_start();
-		loop_end = get_end(loop_start);
-		for(int i = loop_start; i < loop_end; i++)
-    	{	
-			chunk_int = a + ((i + 0.5) * t1 );
-			switch(func)
-        	{
-      			case 1: chunk_val = chunk_val + f1(chunk_int, intensity);
-						break;
-        		case 2: chunk_val = chunk_val + f2(chunk_int, intensity);
-						break;
-        	  	case 3: chunk_val = chunk_val + f3(chunk_int, intensity);
-						break;
-      		  	case 4: chunk_val = chunk_val + f4(chunk_int, intensity);
-						break;
-        	  	default: std::cout<<"\nWrong function id"<<std::endl;
-      		}
-    	  	
-		}	
-		chunk_result = chunk_val * t1;
-		pthread_mutex_lock(&global_result_lock);
-		if ( loop_end >= (n-1))
-    	  		work_done = 1;
-    	pthread_mutex_unlock(&global_result_lock);
-	}
-	pthread_mutex_lock(&global_result_lock);
-    global_result = global_result + chunk_result;
-    pthread_mutex_unlock(&global_result_lock);
+pthread_mutex_lock(&comp_mut);
+ 
+*begin = global_begin;
+ 
+*end = global_end;
+ 
+if(granularity <= (n-global_end))
+{
+	global_begin = *end;
+	global_end = global_begin + granularity;
+}
+ 
+pthread_mutex_unlock(&comp_mut);
+ 
+}
+ 
+ 
+ 
+void* iteration_level_integration(void* p)
+{
+ 
+int begin, end;
+  while(!done()){
+   my_struct *obj_struct = (my_struct*)p;
+ 
+   getnext(&begin, &end);
+ 
+   for (int i=begin; i<end; i++){
+ 
+     float x = (obj_struct->a + (i + 0.5) * obj_struct->mid);
+ 
+     switch(obj_struct->functionid){
+       case 1:
+	 pthread_mutex_lock(&mut);
+         total_sum +=(f1(x, obj_struct->intensity) * obj_struct->mid);
+ 
+	pthread_mutex_unlock(&mut);
+         break;
+ 
+       case 2:
+	pthread_mutex_lock(&mut);
+         total_sum +=(f2(x, obj_struct->intensity) * obj_struct->mid);
+ 
+	pthread_mutex_unlock(&mut);
+         break;
+ 
+       case 3:
+	pthread_mutex_lock(&mut);
+         total_sum +=(f3(x, obj_struct->intensity) * obj_struct->mid);
+ 
+	pthread_mutex_unlock(&mut);
+         break;
+ 
+       case 4:
+	pthread_mutex_lock(&mut);
+         total_sum +=(f4(x, obj_struct->intensity) * obj_struct->mid);
+ 
+	pthread_mutex_unlock(&mut);
+         break;
+     }
+   }   
+  } 
+  pthread_exit(NULL);
+}
+ 
+ 
+ 
+void* chunk_level_integration(void* p)
+{
+ 
+ while(!done()){
+ 
+   my_struct *obj_struct = (my_struct*)p;
+   int begin, end;
+   float sum = 0.0;
+   getnext(&begin, &end);
+   for (int i=begin; i<end; i++){
+     float x = (obj_struct->a + (i + 0.5) * obj_struct->mid);
+ 
+     switch(obj_struct->functionid){
+       case 1:
+         sum +=(f1(x, obj_struct->intensity));
+         break;
+ 
+       case 2:
+         sum +=(f2(x, obj_struct->intensity));
+         break;
+ 
+       case 3:
+         sum +=(f3(x, obj_struct->intensity));
+         break;
+ 
+       case 4:
+         sum +=(f4(x, obj_struct->intensity));
+         break;
+     }
+   }   
+   pthread_mutex_lock(&mut);
+ 
+   total_sum += sum;
+   pthread_mutex_unlock(&mut);
+  }  
+ pthread_exit(NULL);
+}
+ 
+ 
+void* thread_level_integration(void* p)
+{
+ 
+float sum = 0.0;
+   int begin, end;
+   my_struct *obj_struct = (my_struct*)p;
+  while(!done()){
+   getnext(&begin, &end);
+   for (int i=begin; i<end; i++){
+     float x = (obj_struct->a + (i + 0.5) * obj_struct->mid);
+ 
+     switch(obj_struct->functionid){
+       case 1:
+         sum +=(f1(x, obj_struct->intensity));
+         break;
+ 
+       case 2:
+         sum +=(f2(x, obj_struct->intensity));
+         break;
+ 
+       case 3:
+         sum +=(f3(x, obj_struct->intensity));
+         break;
+ 
+       case 4:
+         sum +=(f4(x, obj_struct->intensity));
+         break;
+     }
+   }   
+  }
+  //aggregating total by mutex after thread has completed work
+    pthread_mutex_lock(&mut);
+    total_sum = total_sum + sum;
+    pthread_mutex_unlock(&mut);
     pthread_exit(NULL);
 }
-
-//This function does integration using thread level mutual exclusion where the every thread computes the result in the local variable and aggregates the result in the end.
-void* integrate_thread_level(void * argument)
-{
-    struct arguments* arg = (struct arguments* )argument;
-    
-    while(work_done!=1)
-    {
-    
-    	arg->start = get_start();
-	if (arg->start >= n)
-		break;
-    	arg->end = get_end(arg->start);
-   
-    	for(int i = arg->start; i < arg->end; i++)
-    	{
-    	  
-    		arg->x_int = (arg->a + ((float)i + 0.5) * ((arg->b - arg->a) / (float)arg->n));
-			
-			switch(arg->func)
-    		{
-      			case 1:arg->x_val = arg->x_val + f1(arg->x_int,arg->intensity); 
-	      		break;
-          		case 2: arg->x_val = arg->x_val + f2(arg->x_int,arg->intensity); 
-	      		break;
-          		case 3: arg->x_val = arg->x_val + f3(arg->x_int,arg->intensity); 
-	      		break;
-      	  		case 4: arg->x_val = arg->x_val + f4(arg->x_int,arg->intensity); 
-	      		break;
-            	default: std::cout<<"\nWrong function id"<<std::endl;
-      	 	}
-    	}
-    	arg->result = arg->x_val * ((arg->b - arg->a)/arg->n);
-    pthread_mutex_lock(&global_result_lock);
-		if (arg->end>=n-1)
-    	  		work_done = 1;
-    pthread_mutex_unlock(&global_result_lock);
-    }
-    pthread_exit(NULL);
-}
-
+ 
+ 
+ 
 int main (int argc, char* argv[])
 {
-	if (argc < 9) {
-		std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads> <sync> <granularity>"<<std::endl;
-		return -1;
-	}
-	global_result = 0.0f;
-	a = 0.0f;
-	b = 0.0f; 
-	n = 0.0f;
-	cpu_time = 0;
-	func = 0;
-       	intensity = 0;
-       	granularity = 0;
-	work_done = 0;
-       	nbthreads = 0;
-	startloop = 0; 
-	endloop = 0;
-	result = 0.0f;
-       	global_x_val = 0.0f;
-
-	func = atoi(argv[1]);
-	a = atof(argv[2]);
-	b = atof(argv[3]);
-	n = atof(argv[4]);
-	intensity = atoi(argv[5]);
-	nbthreads = atoi(argv[6]);
-	sync = argv[7];
-	granularity = atoi(argv[8]);
-	pthread_t *threads;
-	struct arguments* arg;
-		
-	threads = (pthread_t *)malloc(nbthreads * sizeof(pthread_t));
-	arg = (struct arguments*)malloc(nbthreads * sizeof(arguments));
-		
-	std::chrono::time_point<std::chrono::system_clock> clock_start = std::chrono::system_clock::now();
-    
-    
-	if ( strcmp(sync, "thread") == 0)
-	{
-		for ( int j = 0; j < nbthreads; j++)
-		{
-			arg[j].a = a;
-			arg[j].b = b;
-			arg[j].intensity =intensity;
-			arg[j].func = func;
-			arg[j].n = n;
-			pthread_create(&threads[j], NULL, integrate_thread_level, (void *)&(arg[j])); 
-		}
-		for ( int i = 0; i < nbthreads; i++)
-		{
-			pthread_join(threads[i], NULL);
-		}
-		for( int k = 0; k < nbthreads; k++)
-		{
-			pthread_mutex_lock(&global_result_lock);
-			global_result += arg[k].result;
-			pthread_mutex_unlock(&global_result_lock);
-		}
-	}
-  	else if( strcmp(sync, "chunk") == 0){
- 		for(int i = 0; i < nbthreads; i++)
- 		{
- 			pthread_create(&threads[i], NULL, integrate_chunk_level, NULL);
- 		}
- 	
- 	  for(int i = 0; i < nbthreads; i++)
- 		{
- 			pthread_join(threads[i], NULL);
- 		}
-	}
-  pthread_mutex_destroy(&loop_locks);
-  pthread_mutex_destroy(&global_result_lock);
-  pthread_mutex_destroy(&iteration_lock);
-  std::chrono::time_point<std::chrono::system_clock> clock_end = std::chrono::system_clock::now();
-  std::chrono::duration<double>diff = clock_end - clock_start;
-  printf("%f",global_result);
-  std::cerr<<diff.count();
+   std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
+ 
+  if (argc < 9) {
+    std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads> <sync> <granularity>"<<std::endl;
+    return -1;
+  } 
+  int functionid = atoi(argv[1]);
+  float a = atof(argv[2]);
+  float b = atof(argv[3]);
+  n = atoi(argv[4]);
+  int intensity = atoi(argv[5]);
+  float mid = ((b - a) / n );
+  int nbthreads = atoi(argv[6]);
+  string sync = argv[7];
+  granularity = atoi(argv[8]);
+  global_end = granularity;
+  struct my_struct obj_struct[nbthreads];
+  pthread_t thread[nbthreads];
+  computations_left = n;
+ 
+    pthread_mutex_init(&mut, NULL);
+    pthread_mutex_init(&comp_mut, NULL);
+ 
+    if(0 == sync.compare("iteration"))
+    {
+    for(int i= 0; i<nbthreads;i++)
+    {
+      obj_struct[i].a = a;
+      obj_struct[i].b = b;
+      obj_struct[i].functionid = functionid;
+      obj_struct[i].intensity = intensity;
+ 
+      obj_struct[i].mid = mid;
+      obj_struct[i].sync = sync;
+      obj_struct[i].n = n;
+     pthread_create(&thread[i], NULL, iteration_level_integration, (void*) &obj_struct[i]);
+    }   
+    }
+    else if(0 == sync.compare("thread"))
+    {
+     for(int i= 0; i<nbthreads;i++)
+      {
+        obj_struct[i].a = a;
+        obj_struct[i].b = b;
+        obj_struct[i].functionid = functionid;
+        obj_struct[i].intensity = intensity;
+ 
+        obj_struct[i].mid = mid;
+        obj_struct[i].sync = sync;
+        obj_struct[i].n = n;
+        pthread_create(&thread[i], NULL, thread_level_integration,(void*) &obj_struct[i]);
+      }
+ 
+    }
+    else if(0 == sync.compare("chunk"))
+    {
+     for(int i= 0; i<nbthreads;i++)
+      {
+        obj_struct[i].a = a;
+        obj_struct[i].b = b;
+        obj_struct[i].functionid = functionid;
+        obj_struct[i].intensity = intensity;
+ 
+        obj_struct[i].mid = mid;
+        obj_struct[i].sync = sync;
+        obj_struct[i].n = n;
+        pthread_create(&thread[i], NULL, chunk_level_integration, (void*) &obj_struct[i]);
+      }
+ 
+    }
+ 
+    for(int i=0; i <nbthreads; i++)
+    {
+     pthread_join(thread[i], NULL);
+    }
+ 
+    pthread_mutex_destroy(&mut);
+    pthread_mutex_destroy(&comp_mut);
+ 
+    cout<<total_sum*mid;;
+ 
+  std::chrono::time_point<std::chrono::system_clock> end_time = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end_time-start_time;
+ 
+  std::cerr<<elapsed_seconds.count()<<std::endl;
+ 
   return 0;
+ 
 }
