@@ -19,90 +19,86 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
-float global_result = 0;
-float global_x_val = 0, global_x_int;
-pthread_mutex_t global_result_lock;
-
-struct arguments
+struct static_data
 {
-  float a, b, result, x_val = 0, x_int;
+  float a, b, result, x_val = 0, x_int, t1;
   int intensity, func, n, start, end;
 };
 
-//This function has the code for thread level mutual exclusion. Every thread has their own instance of result variable and it is aggregated later.
-void *integrate_thread_level(void *argument)
-{
-  struct arguments *arg = (struct arguments *)argument;
+float global_sum = 0, global_x_sum = 0, global_x;
+pthread_mutex_t global_sum_lock;
 
-  for (int i = arg->start; i < arg->end; i++)
+void *thread_sync(void *argument)
+{
+  struct static_data *thread_data = (struct static_data *)argument;
+
+  for (int i = thread_data->start; i < thread_data->end; i++)
   {
-    arg->x_int = (arg->a + ((float)i + 0.5) * ((arg->b - arg->a) / (float)arg->n));
-    switch (arg->func)
+    thread_data->x_int = (thread_data->a + ((float)i + 0.5) * thread_data->t1);
+    switch (thread_data->func)
     {
       case 1:
       {
-        arg->x_val = arg->x_val + f1(arg->x_int, arg->intensity);
+        thread_data->x_val += f1(thread_data->x_int, thread_data->intensity);
         break;
       }
       case 2:
       {
-        arg->x_val = arg->x_val + f2(arg->x_int, arg->intensity);
+        thread_data->x_val += f2(thread_data->x_int, thread_data->intensity);
         break;
       }
       case 3:
       {
-        arg->x_val = arg->x_val + f3(arg->x_int, arg->intensity);
+        thread_data->x_val += f3(thread_data->x_int, thread_data->intensity);
         break;
       }
       case 4:
       {
-        arg->x_val = arg->x_val + f4(arg->x_int, arg->intensity);
+        thread_data->x_val += f4(thread_data->x_int, thread_data->intensity);
         break;
       }
       default:
         std::cout << "\nWrong function id" << std::endl;
     }
-    arg->result = arg->x_val * ((arg->b - arg->a) / (float)arg->n);
+    thread_data->result = thread_data->x_val * thread_data->t1;
   }
   pthread_exit(NULL);
 }
 
-//This function has the code for iteration level mutual exclusion. Every thread manipulates the global variable in the inner most loop through access in the critical section.
-void *integrate_iteration_level(void *argument)
+void *iteration_sync(void *argument)
 {
-  struct arguments *arg = (struct arguments *)argument;
-  for (int i = arg->start; i < arg->end; i++)
+  struct static_data *thread_data = (struct static_data *)argument;
+  for (int i = thread_data->start; i < thread_data->end; i++)
   {
-    pthread_mutex_lock(&global_result_lock);
-    global_x_int = arg->a + ((float)i + 0.5) * ((arg->b - arg->a) / (float)arg->n);
-    switch (arg->func)
+    pthread_mutex_lock(&global_sum_lock);
+    global_x = thread_data->a + ((float)i + 0.5) * thread_data->t1;
+    switch (thread_data->func)
     {
       case 1:
       {
-        global_x_val = global_x_val + f1(global_x_int, arg->intensity);
+        global_x_sum += f1(global_x, thread_data->intensity);
         break;
       }
       case 2:
       {
-        global_x_val = global_x_val + f2(global_x_int, arg->intensity);
+        global_x_sum += f2(global_x, thread_data->intensity);
         break;
       }
       case 3:
       {
-        global_x_val = global_x_val + f3(global_x_int, arg->intensity);
+        global_x_sum += f3(global_x, thread_data->intensity);
         break;
       }
       case 4:
       {
-        global_x_val = global_x_val + f4(global_x_int, arg->intensity);
+        global_x_sum += f4(global_x, thread_data->intensity);
         break;
       }
       default:
         std::cout << "\nWrong function id" << std::endl;
     }
-    global_result = global_x_val * ((arg->b - arg->a) / (float)arg->n);
-    pthread_mutex_unlock(&global_result_lock);
+    global_sum = global_x_sum * thread_data->t1;
+    pthread_mutex_unlock(&global_sum_lock);
   }
   pthread_exit(NULL);
 }
@@ -110,7 +106,7 @@ void *integrate_iteration_level(void *argument)
 int main(int argc, char *argv[])
 {
 
-  float final_result = 0, x_val = 0, x_int, a, b;
+  float final_result = 0, a, b;
   double cpu_time;
   int func, intensity, nbthreads, n;
   char *sync;
@@ -124,27 +120,28 @@ int main(int argc, char *argv[])
 
   pthread_t *threads;
 
-  struct arguments *arg;
+  struct static_data *thread_data;
 
   threads = (pthread_t *)malloc(nbthreads * sizeof(pthread_t));
-  arg = (struct arguments *)malloc(nbthreads * sizeof(struct arguments));
+  thread_data = (struct static_data *)malloc(nbthreads * sizeof(struct static_data));
 
-  pthread_mutex_init(&global_result_lock, NULL);
+  pthread_mutex_init(&global_sum_lock, NULL);
 
-  auto clock_start = std::chrono::system_clock::now();
+  std::chrono::time_point<std::chrono::system_clock> clock_start = std::chrono::system_clock::now();
 
   if (strcmp(sync, "thread") == 0)
   {
     for (int j = 0; j < nbthreads; j++)
     {
-      arg[j].a = a;
-      arg[j].b = b;
-      arg[j].start = j * (n / nbthreads);
-      arg[j].end = arg[j].start + (n / nbthreads);
-      arg[j].intensity = intensity;
-      arg[j].func = func;
-      arg[j].n = n;
-      pthread_create(&threads[j], NULL, integrate_thread_level, (void *)&(arg[j]));
+      thread_data[j].a = a;
+      thread_data[j].b = b;
+      thread_data[j].start = j * (n / nbthreads);
+      thread_data[j].end = thread_data[j].start + (n / nbthreads);
+      thread_data[j].intensity = intensity;
+      thread_data[j].func = func;
+      thread_data[j].n = n;
+      thread_data[j].t1 = (b-a)/(float)n;
+      pthread_create(&threads[j], NULL, thread_sync, (void *)&(thread_data[j]));
     }
     for (int i = 0; i < nbthreads; i++)
     {
@@ -152,21 +149,22 @@ int main(int argc, char *argv[])
     }
     for (int k = 0; k < nbthreads; k++)
     {
-      global_result += arg[k].result;
+      global_sum += thread_data[k].result;
     }
   }
-  else
+  else if(strcmp(sync, "iteration") == 0 )
   {
     for (int j = 0; j < nbthreads; j++)
     {
-      arg[j].a = a;
-      arg[j].b = b;
-      arg[j].start = j * (n / nbthreads);
-      arg[j].end = arg[j].start + (n / nbthreads);
-      arg[j].intensity = intensity;
-      arg[j].func = func;
-      arg[j].n = n;
-      pthread_create(&threads[j], NULL, integrate_iteration_level, (void *)&(arg[j]));
+      thread_data[j].a = a;
+      thread_data[j].b = b;
+      thread_data[j].start = j * (n / nbthreads);
+      thread_data[j].end = thread_data[j].start + (n / nbthreads);
+      thread_data[j].intensity = intensity;
+      thread_data[j].func = func;
+      thread_data[j].n = n;
+      thread_data[j].t1 = (b-a)/(float)n;
+      pthread_create(&threads[j], NULL, iteration_sync, (void *)&(thread_data[j]));
     }
 
     for (int j = 0; j < nbthreads; j++)
@@ -175,9 +173,9 @@ int main(int argc, char *argv[])
     }
   }
 
-  auto clock_end = std::chrono::system_clock::now();
+  std::chrono::time_point<std::chrono::system_clock> clock_end = std::chrono::system_clock::now();
   std::chrono::duration<double> diff = clock_end - clock_start;
-  std::cout << global_result;
+  std::cout << global_sum;
   std::cerr << diff.count();
 
   return 0;
