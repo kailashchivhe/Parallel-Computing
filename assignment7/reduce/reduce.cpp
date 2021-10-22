@@ -5,7 +5,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 
+using namespace std;
+int sum = 0;
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,6 +23,8 @@ extern "C" {
 
 int main (int argc, char* argv[]) {
     //forces openmp to create the threads beforehand
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
     #pragma omp parallel
     {
         int fd = open (argv[0], O_RDONLY);
@@ -47,23 +54,21 @@ int main (int argc, char* argv[]) {
 
     if (kind.compare("static")==0)
     {
-        #pragma omp parallel for ordered schedule(static)
+        #pragma omp parallel for ordered schedule(static) reduction(+:sum)
         for (int i = 0; i < n; i++) {
             sum=sum+ arr[i];
         } 
     }
     else if (kind.compare("dynamic")==0)
     {
-        #pragma omp omp_set_schedule(dynamic)
-        #pragma omp parallel for 
+        #pragma omp parallel for ordered schedule(dynamic) reduction(+:sum) 
             for (int i = 0; i < n; i++) {
                 sum = sum + arr[i];
             }
     }
     else if (kind.compare("guided")==0)
     {
-        #pragma omp omp_set_schedule(guided)
-        #pragma omp parallel for 
+        #pragma omp parallel for ordered schedule(guided) reduction(+:sum) 
             for (int i = 0; i < n; i++) {
                 sum = sum + arr[i];
             }
@@ -72,7 +77,7 @@ int main (int argc, char* argv[]) {
     gettimeofday(&end, NULL);
     cout<<sum;
             
-    double time = ((double)end.tv_sec- (double)start.tv_sec+( (double) end.tv_usec- (double)start.tv_usec)/ (double)1000000; // in seconds
+    double time = ((double)end.tv_sec-(double)start.tv_sec+((double)end.tv_usec-(double)start.tv_usec)/(double)1000000);
 
     std::cerr<<time;
 
