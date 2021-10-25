@@ -46,6 +46,9 @@ int main (int argc, char* argv[]) {
     int nthreads = atoi(argv[2]);
     string kind = argv[3];
     int gran = atoi(argv[4]);
+    if( gran < 0 ){
+        gran = 1;
+    }
     int result=0;
     
     generateReduceData (arr, n);
@@ -54,24 +57,24 @@ int main (int argc, char* argv[]) {
 
     if (kind.compare("static")==0)
     {
-        #pragma omp parallel for num_threads(nthreads) schedule(static) reduction(+:sum)
-	for (int i = 0; i < n; i++) {
-	    sum=sum+ arr[i];
+        #pragma omp parallel for num_threads(nthreads) schedule(static,gran) reduction(+:sum)
+	    for (int i = 0; i < n; i++) {
+	        sum=sum+ arr[i];
         } 
     }
     else if (kind.compare("dynamic")==0)
     {
-        #pragma omp parallel for num_threads(nthreads) schedule(dynamic) reduction(+:sum)
+        #pragma omp parallel for num_threads(nthreads) schedule(dynamic,gran) reduction(+:sum)
 	    for (int i = 0; i < n; i++) {
-                sum = sum + arr[i];
-            }
+            sum = sum + arr[i];
+        }
     }
     else if (kind.compare("guided")==0)
     {
-        #pragma omp parallel for num_threads(nthreads) schedule(guided) reduction(+:sum) 
+        #pragma omp parallel for num_threads(nthreads) schedule(guided,gran) reduction(+:sum) 
 	    for (int i = 0; i < n; i++) {
-                sum = sum + arr[i];
-            }
+            sum = sum + arr[i];
+        }
     }
 
     gettimeofday(&end, NULL);
