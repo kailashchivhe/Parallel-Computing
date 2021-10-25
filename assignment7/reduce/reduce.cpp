@@ -48,28 +48,28 @@ int main (int argc, char* argv[]) {
     int gran = atoi(argv[4]);
     int result=0;
     
-    generateReduceData (arr, atoi(argv[1]));
+    generateReduceData (arr, n);
     
     // insert reduction code here
 
     if (kind.compare("static")==0)
     {
         #pragma omp parallel for num_threads(nthreads) schedule(static) reduction(+:sum)
-        for (int i = 0; i < n; i++) {
-            sum=sum+ arr[i];
+	for (int i = 0; i < n; i++) {
+	    sum=sum+ arr[i];
         } 
     }
     else if (kind.compare("dynamic")==0)
     {
-        #pragma omp parallel for num_threads(nthreads) schedule(dynamic) reduction(+:sum) 
-            for (int i = 0; i < n; i++) {
+        #pragma omp parallel for num_threads(nthreads) schedule(dynamic) reduction(+:sum)
+	    for (int i = 0; i < n; i++) {
                 sum = sum + arr[i];
             }
     }
     else if (kind.compare("guided")==0)
     {
         #pragma omp parallel for num_threads(nthreads) schedule(guided) reduction(+:sum) 
-            for (int i = 0; i < n; i++) {
+	    for (int i = 0; i < n; i++) {
                 sum = sum + arr[i];
             }
     }
