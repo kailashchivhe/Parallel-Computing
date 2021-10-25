@@ -51,7 +51,6 @@ int main (int argc, char* argv[]) {
     if( gran < 0 ){
         gran = 1;
     }
-    int result=0;
     
     generateReduceData (arr, n);
     // insert reduction code here
@@ -80,7 +79,7 @@ int main (int argc, char* argv[]) {
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapased_seconds = end-start;
     cout<<sum;
-    std::cerr<<elapased_seconds;
+    std::cerr<<elapased_seconds.count()<<std::endl;
     delete[] arr;
     return 0;
 }
