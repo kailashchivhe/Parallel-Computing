@@ -56,21 +56,21 @@ int main (int argc, char* argv[]) {
     // insert reduction code here
     if (kind.compare("static")==0)
     {
-        #pragma omp parallel for num_threads(nthreads) schedule(static,gran) reduction(+:sum)
+        #pragma omp parallel for schedule(static,gran) reduction(+:sum) num_threads(nthreads) 
 	    for (int i = 0; i < n; i++) {
 	        sum += arr[i];
         } 
     }
     else if (kind.compare("dynamic")==0)
     {
-        #pragma omp parallel for num_threads(nthreads) schedule(dynamic,gran) reduction(+:sum)
+        #pragma omp parallel for schedule(dynamic,gran) reduction(+:sum) num_threads(nthreads) 
 	    for (int i = 0; i < n; i++) {
             sum += arr[i];
         }
     }
     else if (kind.compare("guided")==0)
     {
-        #pragma omp parallel for num_threads(nthreads) schedule(guided,gran) reduction(+:sum) 
+        #pragma omp parallel for schedule(guided,gran) reduction(+:sum) num_threads(nthreads) 
 	    for (int i = 0; i < n; i++) {
             sum += arr[i];
         }
