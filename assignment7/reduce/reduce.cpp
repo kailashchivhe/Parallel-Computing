@@ -48,34 +48,26 @@ int main (int argc, char* argv[]) {
     int nthreads = atoi(argv[2]);
     string kind = argv[3];
     int gran = atoi(argv[4]);
-    if( gran < 0 ){
-        gran = 1;
-    }
+
     
     generateReduceData (arr, n);
     // insert reduction code here
     if (kind.compare("static")==0)
     {
-        #pragma omp parallel for schedule(static) num_threads(nthreads) reduction(+:sum) 
-	    for (int i = 0; i < n; i++) {
-	        sum += arr[i];
-        } 
+        omp_set_schedule(static,gran); 
     }
     else if (kind.compare("dynamic")==0)
     {
-        #pragma omp parallel for schedule(dynamic,gran) num_threads(nthreads) reduction(+:sum) 
-	    for (int i = 0; i < n; i++) {
-            sum += arr[i];
-        }
+        omp_set_schedule(dynamic,gran); 
     }
     else if (kind.compare("guided")==0)
     {
-        #pragma omp parallel for schedule(guided,gran) num_threads(nthreads) reduction(+:sum) 
-	    for (int i = 0; i < n; i++) {
-            sum += arr[i];
-        }
+        omp_set_schedule(guided,gran); 
     }
-
+    #pragma omp parallel for num_threads(nthreads) schedule(runtime) reduction(+:sum) 
+	    for (int i = 0; i < n; i++) {
+	        sum += arr[i];
+        }
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapased_seconds = end-start;
     cout<<sum;
