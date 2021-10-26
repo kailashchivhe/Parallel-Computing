@@ -8,6 +8,8 @@
 #include <chrono>
 #include <string.h>
 
+using namespace std;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
