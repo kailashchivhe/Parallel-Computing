@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <chrono>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +23,7 @@ float f4(float x, int intensity);
 
 float getFunctionResult(int functionId, float x, int intensity )
 {
-  switch(functionid){
+  switch(functionId){
       case 1:
       {
         return f1(x, intensity);
