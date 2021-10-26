@@ -24,8 +24,6 @@ extern "C" {
 
 int main (int argc, char* argv[]) {
     //forces openmp to create the threads beforehand
-    
-    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
 
     #pragma omp parallel
     {
@@ -52,8 +50,7 @@ int main (int argc, char* argv[]) {
     
     generateReduceData (arr, n);
     // insert reduction code here
-    omp_set_num_threads(nthreads);
-    
+
     if (kind.compare("static")==0)
     {
         omp_set_schedule(omp_sched_static,gran); 
@@ -67,10 +64,13 @@ int main (int argc, char* argv[]) {
         omp_set_schedule(omp_sched_guided,gran); 
     }
 
-    #pragma omp parallel for schedule(runtime) reduction(+:sum) 
-	    for (int i = 0; i < n; i++) {
-	        sum += arr[i];
-        }
+    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+    
+    #pragma omp parallel for reduction(+: sum) schedule(runtime) num_threads(nthreads)
+	for (int i = 0; i < n; i++) 
+    {
+	    sum += arr[i];
+    }
     
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapased_seconds = end-start;
