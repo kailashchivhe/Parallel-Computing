@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <chrono>
 
 #ifdef __cplusplus
 extern "C" {
@@ -133,13 +134,13 @@ int main (int argc, char* argv[]) {
 
   if (kind.compare("static")==0)
   {
-    omp_set_schedule(omp_sched_static);
+    omp_set_schedule(omp_sched_static,-1);
   }
   else if (kind.compare("dynamic")==0){
-    omp_set_schedule(omp_sched_dynamic);
+    omp_set_schedule(omp_sched_dynamic,-1);
   }
   else if (kind.compare("guided")==0){
-    omp_set_schedule(omp_sched_guided);
+    omp_set_schedule(omp_sched_guided,-1);
   }
 
   result = calc_numerical_integration(function_id, a, b, n, intensity, nbthreads);
