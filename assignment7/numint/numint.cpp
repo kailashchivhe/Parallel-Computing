@@ -19,41 +19,83 @@ float f4(float x, int intensity);
 }
 #endif
 
-double calc_numerical_integration(int functionid, float a, float b, int n, int intensity)
+float getFunctionResult(int functionId, float x, int intensity )
+{
+  switch(functionid){
+      case 1:
+      {
+        return f1(x, intensity);
+      }
+      case 2:
+      {
+        return f2(x, intensity);
+      }
+      case 3:
+      {
+        return f3(x, intensity);
+      }
+      case 4:
+      {
+        return f4(x, intensity);
+      }
+  }
+  return 0; 
+}
+
+double calc_numerical_integration(int functionid, float a, float b, int n, int intensity, int nbthreads )
 {
     float sum=0;
     float w = (b-a)/(float)n;
     float x;
-
-    if ( functionid == 1 ){
-      #pragma omp parallel for 
-          for (int i=0;i<n;i++) {
-            x = a + (((float)i + 0.5) * w);
-            sum= sum + f1(x, intensity);
-          }
-      return (sum*w);
-    }else if ( functionid == 2 ){
-        #pragma omp parallel for 
-          for (int i=0;i<n;i++) {
-            x = a + (((float)i + 0.5) * w);
-            sum= sum + f2(x, intensity);
-          }
-      return (sum*w);
-    }else if ( functionid == 3) {
-        #pragma omp parallel for 
-          for (int i=0;i<n;i++) {
-            x = a + (((float)i + 0.5) * w);
-            sum= sum + f3(x, intensity);
-          }
-        return (sum*w);
-    }else if ( functionid == 4 ) {
-        #pragma omp parallel for 
-          for (int i=0;i<n;i++) {
-            x = a + (((float)i + 0.5) * w);
-            sum= sum + f4(x, intensity);
-          }
-        return (sum*w);
+    #pragma omp parallel for reduction(+: sum) schedule(runtime) num_threads(nbthreads)
+    for (int i=0;i<n;i++) 
+    {
+      x = a + (((float)i + 0.5) * w);
+      sum += getFunctionResult( functionid, x, intensity);
     }
+    // switch(functionid){
+    //   case 1:
+    //   {
+    //     #pragma omp parallel for reduction(+: sum) schedule(runtime) num_threads(nbthreads)
+    //     for (int i=0;i<n;i++) 
+    //     {
+    //         x = a + (((float)i + 0.5) * w);
+    //         sum += f1(x, intensity);
+    //     }
+    //     break;
+    //   }
+    //   case 2:
+    //   {
+    //     #pragma omp parallel for reduction(+: sum) schedule(runtime) num_threads(nbthreads)
+    //     for (int i=0;i<n;i++) 
+    //     {
+    //         x = a + (((float)i + 0.5) * w);
+    //         sum += f2(x, intensity);
+    //     }
+    //     break;
+    //   }
+    //   case 3:
+    //   {
+    //     #pragma omp parallel for reduction(+: sum) schedule(runtime) num_threads(nbthreads)
+    //     for (int i=0;i<n;i++) 
+    //     {
+    //         x = a + (((float)i + 0.5) * w);
+    //         sum += f3(x, intensity);
+    //     }
+    //     break;
+    //   }
+    //   case 4:
+    //   {
+    //     #pragma omp parallel for reduction(+: sum) schedule(runtime)
+    //     for (int i=0;i<n;i++) 
+    //     {
+    //         x = a + (((float)i + 0.5) * w);
+    //         sum += f4(x, intensity);
+    //     }
+    //     break;
+    //   }
+    // }
+    return (sum*w);
 }
 
 int main (int argc, char* argv[]) {
@@ -86,31 +128,28 @@ int main (int argc, char* argv[]) {
   intensity = atoi(argv[5]);
   nbthreads = atoi(argv[6]);
   string kind = argv[7];  
-    
+
+  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+
   if (kind.compare("static")==0)
   {
-    #pragma omp parallel
-    #pragma omp omp_set_schedule(static)
-      result=calc_numerical_integration(function_id, a, b, n, intensity);
+    omp_set_schedule(omp_sched_static);
   }
   else if (kind.compare("dynamic")==0){
-    #pragma omp parallel
-    #pragma omp omp_set_schedule(dynamic)
-      result=calc_numerical_integration(function_id, a, b, n, intensity);
+    omp_set_schedule(omp_sched_dynamic);
   }
   else if (kind.compare("guided")==0){
-    #pragma omp parallel
-    #pragma omp omp_set_schedule(guided)
-      result=calc_numerical_integration(function_id, a, b, n, intensity);
+    omp_set_schedule(omp_sched_guided);
   }
- 
-  gettimeofday(&end, NULL);
+
+  result = calc_numerical_integration(function_id, a, b, n, intensity, nbthreads);
   
+  std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapased_seconds = end-start;
+
   cout<<result; 
-  		
-  double time = ((double)end.tv_sec-(double)start.tv_sec+((double)end.tv_usec-(double)start.tv_usec)/(double)1000000); // in seconds
-  
-  std::cerr<<time;
+
+  std::cerr<<elapased_seconds.count()<<std::endl;
 
   return 0;
 }
