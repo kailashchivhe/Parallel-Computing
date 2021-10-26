@@ -52,25 +52,22 @@ int main (int argc, char* argv[]) {
     
     generateReduceData (arr, n);
     // insert reduction code here
-    omp_set_threads(nthreads);
+    omp_set_num_threads(nthreads);
     
     if (kind.compare("static")==0)
     {
-        cout<<"s";
         omp_set_schedule(omp_sched_static,gran); 
     }
     else if (kind.compare("dynamic")==0)
     {
-        cout<<"d";
         omp_set_schedule(omp_sched_dynamic,gran); 
     }
     else if (kind.compare("guided")==0)
     {
-        cout<<"g";
         omp_set_schedule(omp_sched_guided,gran); 
     }
 
-    #pragma omp parallel for reduction(+:sum) 
+    #pragma omp parallel for schedule(runtime) reduction(+:sum) 
 	    for (int i = 0; i < n; i++) {
 	        sum += arr[i];
         }
