@@ -39,6 +39,7 @@ int main (int argc, char* argv[]) {
 
   
   int n = atoi(argv[1]);
+  int nbthread = atoi(argv[2]);
 
   int * arr = new int [n];
 
