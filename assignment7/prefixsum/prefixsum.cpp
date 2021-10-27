@@ -51,7 +51,7 @@ int main (int argc, char* argv[]) {
   
   omp_set_num_threads(nbthread);
 
-  omp_set_schedule(omp_sched_dynamic,-1);
+  omp_set_schedule(omp_sched_static,-1);
   
   int *tarr = new int[nbthread];
   
