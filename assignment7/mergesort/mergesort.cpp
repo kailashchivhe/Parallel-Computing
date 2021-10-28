@@ -69,7 +69,6 @@ void mergesort(int * arr, int n, int * tmp)
    mergesort( arr+(n/2), n-(n/2), tmp );
 	
    #pragma omp taskwait
-
    merge( arr, n, tmp );
 }
 
