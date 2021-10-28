@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <omp.h>
+#include <string.h>
 #include <chrono>
 
 using namespace std;
@@ -68,10 +69,10 @@ void mergesort(int * arr, int n, int * tmp)
       return;
    }
 
-   #pragma omp task firstprivate( X, n, tmp )
+   #pragma omp task firstprivate( arr, n, tmp )
    mergesort( arr, n/2, tmp );
 
-   #pragma omp task firstprivate( X, n, tmp )
+   #pragma omp task firstprivate( arr, n, tmp )
    mergesort( arr+(n/2), n-(n/2), tmp );
 	
    #pragma omp taskwait
@@ -107,7 +108,7 @@ int main(int argc, char *argv[])
   }
 
   int n = atoi(argv[1]);
-  int nbthreads = atoi(argv[2]);
+  int nbthread = atoi(argv[2]);
 
   omp_set_num_threads(nbthread);
 
