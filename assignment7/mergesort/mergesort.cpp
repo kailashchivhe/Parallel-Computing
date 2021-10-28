@@ -47,7 +47,7 @@ void merge(int *arr, int start, int mid, int end )
 	}
 
 	for(i = start; i <= end; i += 1) {
-		arr[i] = temp[i - start]
+		arr[i] = temp[i - start];
 	}
 }
 
