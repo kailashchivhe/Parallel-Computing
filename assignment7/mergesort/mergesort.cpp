@@ -66,10 +66,10 @@ void mergesort(int * arr, int l, int r) {
   if (l < r) {
     int mid = (l+r)/2;
     
-    #pragma omp task
+    #pragma omp task firstprivate(arr,l,mid)
     mergesort(arr, l, mid);
     
-    #pragma omp task
+    #pragma omp task firstprivate(arr,mid, r)
     mergesort(arr, mid+1, r);
     
     #pragma omp taskwait
