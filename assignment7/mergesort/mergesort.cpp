@@ -19,7 +19,7 @@ extern "C" {
 }
 #endif
 
-void merge( int *arr, int n, int *tmpArr )
+void merge(int *arr, int n, int *tmpArr)
 {
   int i = 0;
   int j = n / 2;
@@ -39,26 +39,19 @@ void merge( int *arr, int n, int *tmpArr )
       j++;
     }
   }
-  #pragma omp task
+  while (i < n / 2)
   {
-    while (i < n / 2)
-    {
-      tmpArr[k] = arr[i];
-      k++;
-      i++;
-    }
+    tmpArr[k] = arr[i];
+    k++;
+    i++;
   }
-  #pragma omp task
+  while (j < n)
   {
-    while (j < n)
-    {
-      tmpArr[k] = arr[j];
-      k++;
-      j++;
-    }
+    tmpArr[k] = arr[j];
+    k++;
+    j++;
   }
 
-  #pragma omp taskwait
   memcpy(arr, tmpArr, n * sizeof(int));
 }
 
@@ -77,11 +70,7 @@ void mergesort(int * arr, int n, int * tmp)
 	
    #pragma omp taskwait
 
-   #pragma omp parallel
-  {
-    #pragma omp single
-    merge( arr, n, tmp );
-  }
+   merge( arr, n, tmp );
 }
 
 int main(int argc, char *argv[])
