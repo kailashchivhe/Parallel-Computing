@@ -19,55 +19,63 @@ extern "C" {
 }
 #endif
 
-void merge(int *arr, int start, int mid, int end )
-{
-  int temp[end - start + 1];
+void merge(int * arr, int l, int mid, int r) {
+  // short circuits
+  if (l == r) return;
+  if (r-l == 1) {
+    if (arr[l] > arr[r]) {
+      int temp = arr[l];
+      arr[l] = arr[r];
+      arr[r] = temp;
+    }
+    return;
+  }
 
-	int i = start, j = mid+1, k = 0;
+  int i, j, k;
+  int n = mid - l;
+  
+  // declare and init temp arrays
+  int *temp = new int[n];
+  for (i=0; i<n; ++i)
+    temp[i] = arr[l+i];
 
-	while(i <= mid && j <= end) {
-		if(arr[i] <= arr[j]) {
-			temp[k] = arr[i];
-			k += 1; i += 1;
-		}
-		else {
-			temp[k] = arr[j];
-			k += 1; j += 1;
-		}
-	}
+  i = 0;    // temp left half
+  j = mid;  // right half
+  k = l;    // write to 
 
-	while(i <= mid) {
-		temp[k] = arr[i];
-		k += 1; i += 1;
-	}
+  // merge
+  while (i<n && j<=r) {
+     if (temp[i] <= arr[j] ) {
+       arr[k++] = temp[i++];
+     } else {
+       arr[k++] = arr[j++];
+     }
+  }
 
-	while(j <= end) {
-		temp[k] = arr[j];
-		k += 1; j += 1;
-	}
+  // exhaust temp 
+  while (i<n) {
+    arr[k++] = temp[i++];
+  }
 
-	for(i = start; i <= end; i += 1) {
-		arr[i] = temp[i - start];
-	}
+  // de-allocate structs used
+  delete[] temp;
 }
 
-void mergesort(int * arr, int begin, int end)
-{
-   if ( begin >= end ) 
-   {
-      return;
-   }
+void mergesort(int * arr, int l, int r) {
 
-   int mid = (begin + end) / 2;
+  if (l < r) {
+    int mid = (l+r)/2;
+    
+    #pragma omp task
+    mergesort(arr, l, mid);
+    
+    #pragma omp task
+    mergesort(arr, mid+1, r);
+    
+    #pragma omp taskwait
+    merge(arr, l, mid+1, r);
+  }
 
-   #pragma omp task firstprivate( arr, begin, mid )
-   mergesort( arr, begin, mid );
-
-   #pragma omp task firstprivate( arr, mid, end )
-   mergesort( arr, mid+1, end );
-	
-   #pragma omp taskwait
-   merge( arr, begin, mid, end );
 }
 
 int main(int argc, char *argv[])
@@ -98,7 +106,7 @@ int main(int argc, char *argv[])
 
   omp_set_num_threads(nbthread);
 
-  omp_set_schedule( omp_sched_static,-1 );
+  omp_set_schedule( omp_sched_static, -1 );
 
   // get arr data
   int *arr = new int[n];
