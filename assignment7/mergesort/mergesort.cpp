@@ -19,57 +19,55 @@ extern "C" {
 }
 #endif
 
-void merge(int *arr, int n, int *tmpArr)
+void merge(int *arr, int start, int mid, int end )
 {
-  int i = 0;
-  int j = n / 2;
-  int k = 0;
-  while (i < n / 2 && j < n)
-  {
-    if (arr[i] < arr[j])
-    {
-      tmpArr[k] = arr[i];
-      k++;
-      i++;
-    }
-    else
-    {
-      tmpArr[k] = arr[j];
-      k++;
-      j++;
-    }
-  }
-  while (i < n / 2)
-  {
-    tmpArr[k] = arr[i];
-    k++;
-    i++;
-  }
-  while (j < n)
-  {
-    tmpArr[k] = arr[j];
-    k++;
-    j++;
-  }
+  int temp[end - start + 1];
 
-  memcpy(arr, tmpArr, n * sizeof(int));
+	int i = start, j = mid+1, k = 0;
+
+	while(i <= mid && j <= end) {
+		if(arr[i] <= arr[j]) {
+			temp[k] = arr[i];
+			k += 1; i += 1;
+		}
+		else {
+			temp[k] = arr[j];
+			k += 1; j += 1;
+		}
+	}
+
+	while(i <= mid) {
+		temp[k] = arr[i];
+		k += 1; i += 1;
+	}
+
+	while(j <= end) {
+		temp[k] = arr[j];
+		k += 1; j += 1;
+	}
+
+	for(i = start; i <= end; i += 1) {
+		arr[i] = temp[i - start]
+	}
 }
 
-void mergesort(int * arr, int n, int * tmp)
+void mergesort(int * arr, int begin, int end)
 {
-   if (n < 2) 
+   if ( begin >= end ) 
    {
       return;
    }
 
-   #pragma omp task firstprivate( arr, n, tmp )
-   mergesort( arr, n/2, tmp );
+   int mid = (begin + end) / 2;
 
-   #pragma omp task firstprivate( arr, n, tmp )
-   mergesort( arr+(n/2), n-(n/2), tmp );
+   #pragma omp task firstprivate( arr, begin, mid )
+   mergesort( arr, begin, mid );
+
+   #pragma omp task firstprivate( arr, mid, end )
+   mergesort( arr, mid+1, end );
 	
    #pragma omp taskwait
-   merge( arr, n, tmp );
+   merge( arr, begin, mid, end );
 }
 
 int main(int argc, char *argv[])
@@ -113,7 +111,7 @@ int main(int argc, char *argv[])
   #pragma omp parallel
   {
     #pragma omp single
-    mergesort(arr, n, tmp);
+    mergesort(arr, 0, n-1 );
   }
 
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
