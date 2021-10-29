@@ -19,63 +19,68 @@ extern "C" {
 }
 #endif
 
-void merge(int * arr, int l, int mid, int r) {
-  // short circuits
-  if (l == r) return;
-  if (r-l == 1) {
-    if (arr[l] > arr[r]) {
-      int temp = arr[l];
-      arr[l] = arr[r];
-      arr[r] = temp;
+void merge(int arr[], int l, int m, int r)
+{
+    int i, j, k;
+    int n1 = m - l + 1;
+    int n2 =  r - m;
+
+    int leftArray[n1], rightArray[n2];
+ 
+    for (i = 0; i < n1; i++)
+    {
+        leftArray[i] = arr[l + i];
     }
-    return;
-  }
-
-  int i, j, k;
-  int n = mid - l;
-  
-  // declare and init temp arrays
-  int *temp = new int[n];
-  for (i=0; i<n; ++i)
-    temp[i] = arr[l+i];
-
-  i = 0;    // temp left half
-  j = mid;  // right half
-  k = l;    // write to 
-
-  // merge
-  while (i<n && j<=r) {
-     if (temp[i] <= arr[j] ) {
-       arr[k++] = temp[i++];
-     } else {
-       arr[k++] = arr[j++];
-     }
-  }
-
-  // exhaust temp 
-  while (i<n) {
-    arr[k++] = temp[i++];
-  }
-
-  // de-allocate structs used
-  delete[] temp;
+    for (j = 0; j < n2; j++)
+    {
+        rightArray[j] = arr[m + 1+ j];
+    }
+ 
+    i = 0;
+    j = 0;
+    k = l;
+    while (i < n1 && j < n2)
+    {
+        if (leftArray[i] <= rightArray[j])
+        {
+            arr[k] = leftArray[i];
+            i++;
+        }
+        else
+        {
+            arr[k] = rightArray[j];
+            j++;
+        }
+        k++;
+    }
+ 
+    while (i < n1)
+    {
+        arr[k] = leftArray[i];
+        i++;
+        k++;
+    }
+ 
+    while (j < n2)
+    {
+        arr[k] = rightArray[j];
+        j++;
+        k++;
+    }
 }
 
-void mergesort(int * arr, int l, int r) {
-
-  if (l < r) {
-    int mid = (l+r)/2;
-    
-    #pragma omp task firstprivate(arr,l,mid)
-    mergesort(arr, l, mid);
-    
-    #pragma omp task firstprivate(arr,mid, r)
-    mergesort(arr, mid+1, r);
-    
-    #pragma omp taskwait
-    merge(arr, l, mid+1, r);
-  }
-
+void mergeSort(int arr[], int n, int nthreads)
+{
+  #pragma omp parallel for schedule(runtime) num_threads(nthreads)
+   for (int i=1; i<=n-1; i = 2*i)
+   {
+       for (int j=0; j<n-1; j += 2*i)
+       {
+           int mid = min(j + i - 1, n-1);
+           int right_end = min(j + 2*i - 1, n-1);
+           merge(arr, j, mid, right_end);
+       }
+   }
 }
 
 int main(int argc, char *argv[])
@@ -106,7 +111,7 @@ int main(int argc, char *argv[])
 
   omp_set_num_threads(nbthread);
 
-  omp_set_schedule( omp_sched_static, -1 );
+  omp_set_schedule( omp_sched_dynamic, -1 );
 
   // get arr data
   int *arr = new int[n];
@@ -116,11 +121,8 @@ int main(int argc, char *argv[])
 
   //insert sorting code here.
   std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-  #pragma omp parallel
-  {
-    #pragma omp single
-    mergesort(arr, 0, n-1 );
-  }
+  
+  mergeSort( arr, n, nbthread );
 
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;
