@@ -57,48 +57,6 @@ double calc_numerical_integration(int functionid, float a, float b, int n, int i
       x = a + (((float)i + 0.5) * w);
       sum += getFunctionResult( functionid, x, intensity);
     }
-    // switch(functionid){
-    //   case 1:
-    //   {
-    //     #pragma omp parallel for reduction(+: sum) schedule(runtime) num_threads(nbthreads)
-    //     for (int i=0;i<n;i++) 
-    //     {
-    //         x = a + (((float)i + 0.5) * w);
-    //         sum += f1(x, intensity);
-    //     }
-    //     break;
-    //   }
-    //   case 2:
-    //   {
-    //     #pragma omp parallel for reduction(+: sum) schedule(runtime) num_threads(nbthreads)
-    //     for (int i=0;i<n;i++) 
-    //     {
-    //         x = a + (((float)i + 0.5) * w);
-    //         sum += f2(x, intensity);
-    //     }
-    //     break;
-    //   }
-    //   case 3:
-    //   {
-    //     #pragma omp parallel for reduction(+: sum) schedule(runtime) num_threads(nbthreads)
-    //     for (int i=0;i<n;i++) 
-    //     {
-    //         x = a + (((float)i + 0.5) * w);
-    //         sum += f3(x, intensity);
-    //     }
-    //     break;
-    //   }
-    //   case 4:
-    //   {
-    //     #pragma omp parallel for reduction(+: sum) schedule(runtime)
-    //     for (int i=0;i<n;i++) 
-    //     {
-    //         x = a + (((float)i + 0.5) * w);
-    //         sum += f4(x, intensity);
-    //     }
-    //     break;
-    //   }
-    // }
     return (sum*w);
 }
 
