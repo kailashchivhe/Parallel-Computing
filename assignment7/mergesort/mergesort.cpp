@@ -77,7 +77,6 @@ void mergeSort(int *arr, int l, int r, int nbthreads)
   for (int k = 1; k < n + 1; k *= 2)
   {
     #pragma omp parallel for schedule(static,1)
-
     for (int i = 0; i < n + 1; i += (2 * k))
     {
       int left = i;
