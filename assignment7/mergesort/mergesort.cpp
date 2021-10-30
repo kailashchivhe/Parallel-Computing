@@ -106,12 +106,12 @@ int main(int argc, char *argv[])
   }
 
   //insert sorting code here.
-  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+  std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
   
   mergesort(arr, tmp, start, end, n, nbthreads);
 
-  std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end-start;
+  std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = endTime-startTime;
 
   checkMergeSortResult(arr, n);
 
