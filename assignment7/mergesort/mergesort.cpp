@@ -28,11 +28,15 @@ void merge(int *arr, int l, int m, int r)
   int *temp_right = new int[nright];
 
   for (i = 0; i < nleft; i++)
+  {
     temp_left[i] = arr[l + i];
+  }
 
   for (j = 0; j < nright; j++)
+  {
     temp_right[j] = arr[m + 1 + j];
-
+  }
+  
   i = 0;
   j = 0;
   k = l;
