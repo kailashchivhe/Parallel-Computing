@@ -40,7 +40,6 @@ void merge(int arr[], int tempArray[], int start, int mid, int end, int size)
     tempArray[k++] = arr[i++];
   }
 
-  #pragma omp parallel for schedule(runtime)
   for (int i = start; i <= end; i++)
   {
     arr[i] = tempArray[i];
