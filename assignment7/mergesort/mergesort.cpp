@@ -18,67 +18,52 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
- 
-void merge(int arr[], int l, int m, int r)
+
+void merge(int arr[], int tmp[], int startPosition, int middle, int endPosition, int n)
 {
-    int i, j, k;
-    int n1 = m - l + 1;
-    int n2 =  r - m;
- 
-    int L[n1], R[n2];
- 
-    for (i = 0; i < n1; i++)
-        L[i] = arr[l + i];
-    for (j = 0; j < n2; j++)
-        R[j] = arr[m + 1+ j];
- 
-    i = 0;
-    j = 0;
-    k = l;
-    while (i < n1 && j < n2)
+
+  int k = startPosition, i = startPosition, j = middle + 1;
+
+  while (i <= middle && j <= endPosition)
+  {
+    if (arr[i] < arr[j])
     {
-        if (L[i] <= R[j])
-        {
-            arr[k] = L[i];
-            i++;
-        }
-        else
-        {
-            arr[k] = R[j];
-            j++;
-        }
-        k++;
+      tmp[k++] = arr[i++];
     }
- 
-    while (i < n1)
+    else
     {
-        arr[k] = L[i];
-        i++;
-        k++;
+      tmp[k++] = arr[j++];
     }
- 
-    while (j < n2)
-    {
-        arr[k] = R[j];
-        j++;
-        k++;
-    }
+  }
+
+  while (i < n && i <= middle)
+  {
+    tmp[k++] = arr[i++];
+  }
+
+  for (int i = startPosition; i <= endPosition; i++)
+  {
+    arr[i] = tmp[i];
+  }
 }
 
-void mergeSort(int arr[], int n)
+void mergesort(int arr[], int tmp[], int start, int end, int n, int nbthreads)
 {
-   int curr_size;
-   int left_start;
-   for (curr_size=1; curr_size<=n-1; curr_size = 2*curr_size)
-   {
-       #pragma omp parallel for schedule(static,1)
-       for (left_start=0; left_start<n-1; left_start += 2*curr_size)
-       {
-           int mid = min(left_start + curr_size - 1, n-1);
-           int right_end = min(left_start + 2*curr_size - 1, n-1);
-           merge(arr, left_start, mid, right_end);
-       }
-   }
+  omp_set_num_threads(nbthreads);
+  omp_set_schedule(omp_sched_static, 1);
+
+  for (int blockSize = 1; blockSize < end - start; blockSize = 2 * blockSize)
+  {
+    #pragma omp parallel for schedule(runtime)
+    for (int i = start; i <= end; i = i + 2 * blockSize)
+    {
+      int startPosition = i;
+      int middle = i + blockSize - 1;
+      int endPosition = min(i + 2 * blockSize - 1, end);
+
+      merge(arr, tmp, startPosition, middle, endPosition, n);
+    }
+  }
 }
 
 int main(int argc, char *argv[])
@@ -103,19 +88,27 @@ int main(int argc, char *argv[])
   }
 
   int n = atoi(argv[1]);
-  int nbthread = atoi(argv[2]);
+  int nbthreads = atoi(argv[2]);
 
-  omp_set_num_threads(nbthread);
-
+  int start = 0;
+  int end = n-1;
+  
   // get arr data
-  int *arr = new int[n];
+  int * arr = new int [n];
 
-  generateMergeSortData(arr, n);
+  generateMergeSortData (arr, n);
+  
+  int tmp[n];
+  
+  for (int i = 0; i < n; i++) 
+  {
+    tmp[i] = arr[i];
+  }
 
   //insert sorting code here.
   std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
   
-  mergeSort(arr, n);
+  mergesort(arr, tmp, start, end, n, nbthreads);
 
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;
