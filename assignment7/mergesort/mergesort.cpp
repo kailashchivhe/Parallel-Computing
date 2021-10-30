@@ -73,11 +73,10 @@ void merge(int *arr, int l, int m, int r)
 void mergeSort(int *arr, int l, int r, int nbthreads)
 {
   omp_set_num_threads(nbthreads);
-  omp_set_schedule(omp_sched_static,1);
   int n = r;
   for (int k = 1; k < n + 1; k *= 2)
   {
-    #pragma omp parallel for schedule(runtime)
+    #pragma omp parallel for schedule(static,1)
 
     for (int i = 0; i < n + 1; i += (2 * k))
     {
