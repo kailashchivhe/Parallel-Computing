@@ -46,12 +46,8 @@ void merge(int arr[], int tempArray[], int start, int mid, int end, int size)
   }
 }
 
-void mergesort(int arr[], int tempArray[], int start, int end, int n, int nbthreads)
+void mergesort(int arr[], int tempArray[], int start, int end, int n)
 {
-  omp_set_num_threads(nbthreads);
-
-  omp_set_schedule(omp_sched_static, 1);
-
   for(int bSize = 1; bSize < end - start; bSize = 2 * bSize)
   {
     #pragma omp parallel for schedule(runtime)
@@ -105,10 +101,14 @@ int main(int argc, char *argv[])
     tempArray[i] = arr[i];
   }
 
+  omp_set_num_threads(nbthread);
+
+  omp_set_schedule(omp_sched_static, 1); //Setting chunk size to 1
+
   //insert sorting code here.
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
   
-  mergesort(arr, tempArray, startIndex, endIndex, size, nbthread);
+  mergesort(arr, tempArray, startIndex, endIndex, size);
 
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = endTime-startTime;
