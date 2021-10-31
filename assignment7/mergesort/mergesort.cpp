@@ -56,7 +56,7 @@ void mergesort(int arr[], int tempArray[], int start, int end, int n)
       int front = i;
       int mid = i + bSize - 1;
       int rear = min(i + 2 * bSize - 1, end);
-      
+      //Extra credit merge() parallel
       merge(arr, tempArray, front, mid, rear, n);
     }
   }
