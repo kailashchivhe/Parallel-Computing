@@ -39,10 +39,12 @@ void merge(int arr[], int tempArray[], int start, int mid, int end, int size)
   {
     tempArray[k++] = arr[i++];
   }
-
-  for (int i = start; i <= end; i++)
+  #pragma omp parallel for schedule(runtime)
   {
-    arr[i] = tempArray[i];
+    for (int i = start; i <= end; i++)
+    {
+      arr[i] = tempArray[i];
+    }
   }
 }
 
@@ -56,7 +58,7 @@ void mergesort(int arr[], int tempArray[], int start, int end, int n)
       int front = i;
       int mid = i + bSize - 1;
       int rear = min(i + 2 * bSize - 1, end);
-      //Extra credits
+      
       merge(arr, tempArray, front, mid, rear, n);
     }
   }
