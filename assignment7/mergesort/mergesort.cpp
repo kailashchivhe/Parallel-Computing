@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
   omp_set_num_threads(nbthread);
 
-  omp_set_schedule(omp_sched_static, -1); //Setting chunk size to 1
+  omp_set_schedule(omp_sched_static, -1); //Setting chunk size to default
 
   //insert sorting code here.
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
