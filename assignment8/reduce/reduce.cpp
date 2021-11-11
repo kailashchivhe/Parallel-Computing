@@ -5,6 +5,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <omp.h>
+#include <string.h>
+#include <chrono>
 
 
 #ifdef __cplusplus
@@ -17,6 +20,31 @@ extern "C" {
 }
 #endif
 
+int findSum(int* arr, int size)
+{
+    if (n == 0) {
+        return 0;
+    }
+    else if (n == 1) {
+        return 1;
+    }
+
+    // recursive case
+    size_t half = size / 2;
+    float x, y;
+
+    #pragma omp parallel
+    #pragma omp single nowait
+    {
+        #pragma omp task shared(x)
+        x = sum(arr, half);
+        #pragma omp task shared(y)
+        y = sum(arr + half, n - half);
+        #pragma omp taskwait
+        x += y;
+    }
+    return x;
+}
 
 int main (int argc, char* argv[]) {
   //forces openmp to create the threads beforehand
@@ -40,13 +68,24 @@ int main (int argc, char* argv[]) {
   int nbthread = atoi(argv[2]);
   int * arr = new int [n];
 
-  generateReduceData (arr, atoi(argv[1]));
+  omp_set_num_threads(nbthread);
+  generateReduceData (arr, n);
 
-  //reduce
-  for (int i = 0; i<n; ++i) {
-    result +=  arr[i];
-  }
+  std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
+
+  // #pragma omp parallel for shared(result)
+  // for (int i = 0; i<n; ++i) {
+  //   result +=  arr[i];
+  // }
+
+  result = findSum(arr, n);
   
+  std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = endTime-startTime;
+  
+  std::cout<<result<<std::endl;
+  std::cerr<<elapsed_seconds.count()<<std::endl;
+
   delete[] arr;
 
   return 0;
