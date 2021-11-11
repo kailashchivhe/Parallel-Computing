@@ -4,6 +4,9 @@
 #include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
+#include <omp.h>
+#include <string.h>
+#include <chrono>
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,14 +107,20 @@ int main (int argc, char* argv[]) {
   int * arr = new int [n];
   generateMergeSortData (arr, n);
 
+  omp_set_num_threads(nbthread);
+
+  std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
   //insert sorting code here.
   #pragma omp parallel
    {
       #pragma omp single
       mergesort(arr, 0, n-1);
    }
-  
+  std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = endTime-startTime;
   checkMergeSortResult (arr, n);
+
+  std::cerr<<elapsed_seconds.count()<<std::endl;
   
   delete[] arr;
 
