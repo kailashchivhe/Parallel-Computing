@@ -8,7 +8,7 @@ LD=g++
 UTILDIR=util
 
 
-all: reduce mergesort lcs approx
+all: reduce_seq mergesort_seq
 
 
 # archives
@@ -26,20 +26,16 @@ mergesort_seq: mergesort_seq.o
 	$(LD) $(LDFLAGS) mergesort_seq.o $(ARCHIVES) -o mergesort_seq
 
 
-lcs_seq: lcs_seq.o
-	$(LD) $(LDFLAGS) lcs_seq.o $(ARCHIVES) -o lcs_seq
-
-
 # run benchmarks
-bench: reduce_seq mergesort_seq lcs_seq
+bench: reduce_seq mergesort_seq
 	./queue.sh
 
 clean:
 	-rm *.o
-	-rm reduce_seq mergesort_seq lcs_seq
+	-rm reduce_seq mergesort_seq
 
 distclean:
 	-rm *.sh.*
 
 
-.PHONY: reduce mergesort lcs reduce_seq mergesort_seq lcs_seq 
+.PHONY: reduce_seq mergesort_seq

@@ -37,12 +37,15 @@ int main (int argc, char* argv[]) {
   }
 
   int n = atoi(argv[1]);
+  int nbthread = atoi(argv[2]);
   int * arr = new int [n];
 
   generateReduceData (arr, atoi(argv[1]));
 
-  //insert reduction code here
-  
+  //reduce
+  for (int i = 0; i<n; ++i) {
+    result +=  arr[i];
+  }
   
   delete[] arr;
 

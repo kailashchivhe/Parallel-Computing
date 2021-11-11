@@ -4,6 +4,8 @@ LDFLAGS=-fopenmp
 ARCHIVES=libgen.a 
 LD=g++
 
+all: libgen.a approx
+
 # archives
 libgen.a: gen_lib.o
 	ar rcs libgen.a gen_lib.o
