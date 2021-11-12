@@ -98,10 +98,10 @@ int main (int argc, char* argv[]) {
         {
             #pragma omp taskgroup task_reduction(+: total)
             {
-                for(int i = 0; i < ARRAY_SIZE; i++)
+                for(int i = 0; i < n; i++)
                 {
                     #pragma omp task in_reduction(+: total)
-                    total += myArray[i];
+                    total += arr[i];
                 }
             }
         }
