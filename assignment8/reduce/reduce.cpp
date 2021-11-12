@@ -50,7 +50,7 @@ int main (int argc, char* argv[]) {
 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
-  #pragma omp parallel for reduction(+: sum) schedule(static) num_threads(nthreads)
+  #pragma omp parallel for reduction(+: sum) schedule(static) num_threads(nbthread)
 	for (int i = 0; i < n; i++) 
     {
       #pragma omp task
