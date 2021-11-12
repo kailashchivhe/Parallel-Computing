@@ -22,10 +22,10 @@ extern "C" {
 
 int findSum(int* arr, int size)
 {
-    if (n == 0) {
+    if (size == 0) {
         return 0;
     }
-    else if (n == 1) {
+    else if (size == 1) {
         return 1;
     }
 
@@ -34,14 +34,16 @@ int findSum(int* arr, int size)
     float x, y;
 
     #pragma omp parallel
-    #pragma omp single nowait
     {
-        #pragma omp task shared(x)
-        x = sum(arr, half);
-        #pragma omp task shared(y)
-        y = sum(arr + half, n - half);
-        #pragma omp taskwait
-        x += y;
+      #pragma omp single
+      {
+          #pragma omp task shared(x) if(size>33)
+          x = sum(arr, half);
+          #pragma omp task shared(y) if(size>33)
+          y = sum(arr + half, size - half);
+          #pragma omp taskwait
+          x += y;
+      }
     }
     return x;
 }
