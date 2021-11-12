@@ -21,29 +21,60 @@ extern "C" {
 }
 #endif
 
-float findSum(int* arr, int size)
+float findSum(int* begin, int* end)
 {
     // base case
-    if (size == 0) {
-        return 0;
-    }
-    else if (size == 1) {
-        return arr[0];
-    }
+    // if (size == 0) {
+    //     return 0;
+    // }
+    // else if (size == 1) {
+    //     return arr[0];
+    // }
 
-    int half = (int) std::floor(size / 2);
-    float x, y;
+    // int half = (int) std::floor(size / 2);
+    // float x, y;
 
-    #pragma omp task shared(x) if(size-half >= (1<<14))
-    x = findSum(arr, half);
+    // #pragma omp task shared(x) if(size-half >= (1<<14))
+    // x = findSum(arr, half);
     
-    #pragma omp task shared(y) if(size-half >= (1<<14))
-    y = findSum(arr + half, size - half);
+    // #pragma omp task shared(y) if(size-half >= (1<<14))
+    // y = findSum(arr + half, size - half);
     
-    #pragma omp taskwait
-    x += y;
+    // #pragma omp taskwait
+    // x += y;
 
-    return x;
+    // return x;
+
+    size_t length = end - begin;
+    size_t mid = length / 2;
+    int sum = 0;
+
+    if (length < 1000)
+    {
+      for (size_t ii = 1; ii < length; ii++)
+      {
+        begin[ii] += begin[ii - 1];
+      }
+    }
+    else
+    {
+      #pragma omp task shared(sum)
+      {
+        sum = recursiveSumBody(begin, begin + mid);
+      }
+      #pragma omp task
+      {
+        recursiveSumBody(begin + mid, end);
+      }
+      #pragma omp taskwait
+
+      #pragma omp parallel for
+      for (size_t ii = mid; ii < length; ii++)
+      {
+        begin[ii] += sum;
+      }
+    }
+    return begin[length - 1];
 }
 
 int main (int argc, char* argv[]) {
@@ -77,7 +108,7 @@ int main (int argc, char* argv[]) {
   #pragma omp parallel
   {
     #pragma omp single
-    result = findSum(arr, n);
+    result = findSum(&arr[0], &arr[n]);
   }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
