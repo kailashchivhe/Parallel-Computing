@@ -43,22 +43,19 @@ int main (int argc, char* argv[]) {
   int nbthread = atoi(argv[2]);
   int * arr = new int [n];
   float result = 0.0f;
-  int threadSum = 0;
+  int sum = 0;
 
   omp_set_num_threads(nbthread);
   generateReduceData (arr, n);
 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
-  #pragma omp parallel for schedule(static)
-  for (int i = 0; i<n; ++i) {
-      threadSum = 0;
-      #pragma omp task private(threadSum)
-      threadSum +=  arr[i];
-      #pragma omp taskwait
-      #pragma omp critical
-      result += threadSum;
-  }
+  #pragma omp parallel for reduction(+: sum) schedule(static) num_threads(nthreads)
+	for (int i = 0; i < n; i++) 
+    {
+      #pragma omp task
+	    sum += arr[i];
+    }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
   
