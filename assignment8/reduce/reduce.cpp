@@ -9,6 +9,8 @@
 #include <string.h>
 #include <chrono>
 
+using namespace std;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
