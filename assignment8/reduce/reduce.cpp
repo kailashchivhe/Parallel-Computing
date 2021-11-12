@@ -80,6 +80,7 @@ int main (int argc, char* argv[]) {
   int n = atoi(argv[1]);
   int nbthread = atoi(argv[2]);
   int * arr = new int [n];
+  float result = 0.0f;
 
   omp_set_num_threads(nbthread);
   generateReduceData (arr, n);
@@ -88,7 +89,7 @@ int main (int argc, char* argv[]) {
 
   #pragma omp parallel
   #pragma omp single nowait
-  float result = findSum(arr, n);
+  result = findSum(arr, n);
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
   
