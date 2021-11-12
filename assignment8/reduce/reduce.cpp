@@ -37,9 +37,9 @@ int findSum(int* arr, int size)
     {
       #pragma omp single
       {
-          #pragma omp task shared(x) if(half>14)
+          #pragma omp task shared(x) if(size>33)
           x = findSum(arr, half);
-          #pragma omp task shared(y) if(half>14)
+          #pragma omp task shared(y) if(size>33)
           y = findSum(arr + half, size - half);
           #pragma omp taskwait
           x += y;
