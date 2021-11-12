@@ -39,7 +39,7 @@ float serial_sum(int *a, size_t n)
 float findSum(int* arr, int size)
 {
     // base case
-    if (size <= CUTOFF) {
+    if( size <= CUTOFF ) {
         return serial_sum(arr, size);
     }
 
@@ -88,18 +88,10 @@ int main (int argc, char* argv[]) {
 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
-  // #pragma omp parallel
-  // #pragma omp single nowait
-  // result = findSum(arr, n);
-
   #pragma omp parallel
-  #pragma omp single
-  #pragma omp taskgroup task_reduction(+: total)
   {
-    for(int i = 0; i < n; i++){
-      #pragma omp task in_reduction(+: total)
-      total += arr[i];
-    }
+    #pragma omp single
+    result = findSum(arr, n);
   }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
