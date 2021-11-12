@@ -21,6 +21,25 @@ extern "C" {
 }
 #endif
 
+int reduce(int* arr, unsigned long int n)
+{
+    int x;
+    if (n <= 0)
+        return 0;
+    // if( n >= (1<<14))
+    // {
+      #pragma omp task shared(x)
+      x = reduce_par(arr, n - 1) + arr[n - 1];
+      #pragma omp taskwait
+    // }
+    // else
+    // {
+    //   x = reduce_par(arr, n - 1) + arr[n - 1];
+    // }
+    return x;
+}
+
+
 int main (int argc, char* argv[]) {
   //forces openmp to create the threads beforehand
 #pragma omp parallel
@@ -50,13 +69,13 @@ int main (int argc, char* argv[]) {
 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
-  #pragma omp parallel for reduction(+: sum) schedule(static) num_threads(nbthread)
-	for (int i = 0; i < n; i++) 
+  #pragma omp parallel
+  {
+    #pragma omp single nowait
     {
-      #pragma omp task
-	    sum += arr[i];
-      #pragma omp taskwait
+      reduce(arr, n);
     }
+  }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
   
