@@ -55,6 +55,7 @@ int main (int argc, char* argv[]) {
     {
       #pragma omp task
 	    sum += arr[i];
+      #pragma omp taskwait
     }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
