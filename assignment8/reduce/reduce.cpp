@@ -9,6 +9,7 @@
 #include <string.h>
 #include <chrono>
 
+#define CUTOFF 100
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,13 +21,26 @@ extern "C" {
 }
 #endif
 
-int findSum(int* arr, int size)
+float serial_sum(const float *a, size_t n)
 {
-    if (size == 0) {
-        return 0;
+    // base cases
+    if (n == 0) {
+        return 0.;
     }
-    else if (size == 1) {
-        return *arr;
+    else if (n == 1) {
+        return a[0];
+    }
+
+    // recursive case
+    size_t half = n / 2;
+    return serial_sum(a, half) + serial_sum(a + half, n - half);
+}
+
+float findSum(int* arr, int size)
+{
+    // base case
+    if (n <= CUTOFF) {
+        return serial_sum(arr, size);
     }
 
     // recursive case
@@ -37,9 +51,9 @@ int findSum(int* arr, int size)
     {
       #pragma omp single
       {
-          #pragma omp task shared(x) if(size>33)
+          #pragma omp task shared(x)
           x = findSum(arr, half);
-          #pragma omp task shared(y) if(size>33)
+          #pragma omp task shared(y)
           y = findSum(arr + half, size - half);
           #pragma omp taskwait
           x += y;
@@ -75,14 +89,10 @@ int main (int argc, char* argv[]) {
 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
-  // #pragma omp parallel for shared(result)
-  // for (int i = 0; i<n; ++i) {
-  //   result +=  arr[i];
-  // }
-
-  int result = findSum(arr, n);
+  float result = findSum(arr, n);
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
+  
   std::chrono::duration<double> elapsed_seconds = endTime-startTime;
   
   std::cout<<result<<std::endl;
