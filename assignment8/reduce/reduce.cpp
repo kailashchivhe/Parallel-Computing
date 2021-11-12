@@ -92,15 +92,16 @@ int main (int argc, char* argv[]) {
   // #pragma omp single nowait
   // result = findSum(arr, n);
 
-  #pragma omp parallel reduction(task, +: total)
+  #pragma omp parallel
     {
         #pragma omp single
         {
-            for(int i = 0; i < n; i++)
+            #pragma omp taskgroup task_reduction(+: total)
             {
-                #pragma omp task in_reduction(+: total)
+                for(int i = 0; i < ARRAY_SIZE; i++)
                 {
-                    total += arr[i];
+                    #pragma omp task in_reduction(+: total)
+                    total += myArray[i];
                 }
             }
         }
@@ -111,7 +112,7 @@ int main (int argc, char* argv[]) {
   std::chrono::duration<double> elapsed_seconds = endTime-startTime;
   
   std::cout<<total<<std::endl;
-  
+
   std::cerr<<elapsed_seconds.count()<<std::endl;
 
   delete[] arr;
