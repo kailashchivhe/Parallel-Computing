@@ -26,7 +26,7 @@ int findSum(int* arr, int size)
         return 0;
     }
     else if (size == 1) {
-        return 1;
+        return *arr;
     }
 
     // recursive case
@@ -37,9 +37,9 @@ int findSum(int* arr, int size)
     {
       #pragma omp single
       {
-          #pragma omp task shared(x) if(size>33)
+          #pragma omp task shared(x) if(half>14)
           x = findSum(arr, half);
-          #pragma omp task shared(y) if(size>33)
+          #pragma omp task shared(y) if(half>14)
           y = findSum(arr + half, size - half);
           #pragma omp taskwait
           x += y;
