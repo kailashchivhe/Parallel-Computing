@@ -21,7 +21,7 @@ extern "C" {
 }
 #endif
 
-float serial_sum(const float *a, size_t n)
+float serial_sum(int *a, size_t n)
 {
     // base cases
     if (n == 0) {
@@ -39,7 +39,7 @@ float serial_sum(const float *a, size_t n)
 float findSum(int* arr, int size)
 {
     // base case
-    if (n <= CUTOFF) {
+    if (size <= CUTOFF) {
         return serial_sum(arr, size);
     }
 
