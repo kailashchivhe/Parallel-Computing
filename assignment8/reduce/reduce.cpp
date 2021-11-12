@@ -38,9 +38,9 @@ int findSum(int* arr, int size)
       #pragma omp single
       {
           #pragma omp task shared(x) if(size>33)
-          x = sum(arr, half);
+          x = findSum(arr, half);
           #pragma omp task shared(y) if(size>33)
-          y = sum(arr + half, size - half);
+          y = findSum(arr + half, size - half);
           #pragma omp taskwait
           x += y;
       }
@@ -80,7 +80,7 @@ int main (int argc, char* argv[]) {
   //   result +=  arr[i];
   // }
 
-  result = findSum(arr, n);
+  int result = findSum(arr, n);
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = endTime-startTime;
