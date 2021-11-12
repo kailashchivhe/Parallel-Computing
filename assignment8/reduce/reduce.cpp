@@ -29,14 +29,13 @@ float findSum(int* arr, int size)
         return arr[0];
     }
 
-    // recursive case
-    size_t half = size / 2;
+    int half = (int) std::floor(size / 2);
     float x, y;
 
-    #pragma omp task shared(x) if(size > 100)
+    #pragma omp task shared(x) if(size-half >= (1<<14))
     x = findSum(arr, half);
     
-    #pragma omp task shared(y) if(size > 100)
+    #pragma omp task shared(y) if(size-half >= (1<<14))
     y = findSum(arr + half, size - half);
     
     #pragma omp taskwait
