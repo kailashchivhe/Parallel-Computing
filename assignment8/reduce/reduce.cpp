@@ -60,11 +60,11 @@ float findSum(int* begin, int* end)
     {
       #pragma omp task shared(sum)
       {
-        sum = recursiveSumBody(begin, begin + mid);
+        sum = findSum(begin, begin + mid);
       }
       #pragma omp task
       {
-        recursiveSumBody(begin + mid, end);
+        findSum(begin + mid, end);
       }
       #pragma omp taskwait
 
