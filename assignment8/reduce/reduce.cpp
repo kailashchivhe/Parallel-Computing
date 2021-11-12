@@ -93,19 +93,14 @@ int main (int argc, char* argv[]) {
   // result = findSum(arr, n);
 
   #pragma omp parallel
-    {
-        #pragma omp single
-        {
-            #pragma omp taskgroup task_reduction(+: total)
-            {
-                for(int i = 0; i < n; i++)
-                {
-                    #pragma omp task in_reduction(+: total)
-                    total += arr[i];
-                }
-            }
-        }
+  #pragma omp single
+  #pragma omp taskgroup task_reduction(+: total)
+  {
+    for(int i = 0; i < n; i++){
+      #pragma omp task in_reduction(+: total)
+      total += arr[i];
     }
+  }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
   
