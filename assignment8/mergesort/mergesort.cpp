@@ -71,10 +71,10 @@ void mergesort(int * arr, int l, int r)
 {
   if (l < r) {
     int mid = (l+r)/2;
-    #pragma omp task
+    #pragma omp task shared(arr) if(r-l >= (1<<14))
     mergesort(arr, l, mid);
 
-    #pragma omp task
+    #pragma omp task shared(arr) if(r-l >= (1<<14))
     mergesort(arr, mid+1, r);
 
     #pragma omp taskwait
@@ -121,7 +121,7 @@ int main (int argc, char* argv[]) {
   checkMergeSortResult (arr, n);
 
   std::cerr<<elapsed_seconds.count()<<std::endl;
-  
+
   delete[] arr;
 
   return 0;
