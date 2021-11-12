@@ -9,8 +9,6 @@
 #include <string.h>
 #include <chrono>
 
-#define CUTOFF 100
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,36 +19,24 @@ extern "C" {
 }
 #endif
 
-float serial_sum(int *a, size_t n)
-{
-    // base cases
-    if (n == 0) {
-        return 0.;
-    }
-    else if (n == 1) {
-        return a[0];
-    }
-
-    // recursive case
-    size_t half = n / 2;
-    return serial_sum(a, half) + serial_sum(a + half, n - half);
-}
-
 float findSum(int* arr, int size)
 {
     // base case
-    if( size <= CUTOFF ) {
-        return serial_sum(arr, size);
+    if (size == 0) {
+        return 0;
+    }
+    else if (size == 1) {
+        return arr[0];
     }
 
     // recursive case
     size_t half = size / 2;
     float x, y;
 
-    #pragma omp task shared(x)
+    #pragma omp task shared(x) if(size > 100)
     x = findSum(arr, half);
     
-    #pragma omp task shared(y)
+    #pragma omp task shared(y) if(size > 100)
     y = findSum(arr + half, size - half);
     
     #pragma omp taskwait
@@ -81,7 +67,6 @@ int main (int argc, char* argv[]) {
   int nbthread = atoi(argv[2]);
   int * arr = new int [n];
   float result = 0.0f;
-  int total = 0;
 
   omp_set_num_threads(nbthread);
   generateReduceData (arr, n);
@@ -98,7 +83,7 @@ int main (int argc, char* argv[]) {
   
   std::chrono::duration<double> elapsed_seconds = endTime-startTime;
   
-  std::cout<<total<<std::endl;
+  std::cout<<result<<std::endl;
 
   std::cerr<<elapsed_seconds.count()<<std::endl;
 
