@@ -81,21 +81,37 @@ int main (int argc, char* argv[]) {
   int nbthread = atoi(argv[2]);
   int * arr = new int [n];
   float result = 0.0f;
+  int total = 0;
 
   omp_set_num_threads(nbthread);
   generateReduceData (arr, n);
 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
-  #pragma omp parallel
-  #pragma omp single nowait
-  result = findSum(arr, n);
+  // #pragma omp parallel
+  // #pragma omp single nowait
+  // result = findSum(arr, n);
+
+  #pragma omp parallel reduction(task, +: total)
+    {
+        #pragma omp single
+        {
+            for(int i = 0; i < n; i++)
+            {
+                #pragma omp task in_reduction(+: total)
+                {
+                    total += arr[i];
+                }
+            }
+        }
+    }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
   
   std::chrono::duration<double> elapsed_seconds = endTime-startTime;
   
-  std::cout<<result<<std::endl;
+  std::cout<<total<<std::endl;
+  
   std::cerr<<elapsed_seconds.count()<<std::endl;
 
   delete[] arr;
