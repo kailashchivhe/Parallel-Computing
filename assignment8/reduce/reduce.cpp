@@ -47,18 +47,15 @@ float findSum(int* arr, int size)
     size_t half = size / 2;
     float x, y;
 
-    #pragma omp parallel
-    {
-      #pragma omp single
-      {
-          #pragma omp task shared(x)
-          x = findSum(arr, half);
-          #pragma omp task shared(y)
-          y = findSum(arr + half, size - half);
-          #pragma omp taskwait
-          x += y;
-      }
-    }
+    #pragma omp task shared(x)
+    x = findSum(arr, half);
+    
+    #pragma omp task shared(y)
+    y = findSum(arr + half, size - half);
+    
+    #pragma omp taskwait
+    x += y;
+
     return x;
 }
 
@@ -89,6 +86,8 @@ int main (int argc, char* argv[]) {
 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
+  #pragma omp parallel
+  #pragma omp single nowait
   float result = findSum(arr, n);
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
