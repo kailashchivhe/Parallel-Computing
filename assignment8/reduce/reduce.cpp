@@ -21,24 +21,6 @@ extern "C" {
 }
 #endif
 
-int reduce(int* arr, unsigned long int n)
-{
-    int x;
-    if (n <= 0)
-        return 0;
-    // if( n >= (1<<14))
-    // {
-      #pragma omp task shared(x)
-      x = reduce_par(arr, n - 1) + arr[n - 1];
-      #pragma omp taskwait
-    // }
-    // else
-    // {
-    //   x = reduce_par(arr, n - 1) + arr[n - 1];
-    // }
-    return x;
-}
-
 
 int main (int argc, char* argv[]) {
   //forces openmp to create the threads beforehand
@@ -62,26 +44,28 @@ int main (int argc, char* argv[]) {
   int nbthread = atoi(argv[2]);
   int * arr = new int [n];
   float result = 0.0f;
-  int sum = 0;
+  float total = 0.0f;
 
   omp_set_num_threads(nbthread);
   generateReduceData (arr, n);
-
+  int limit = n / nbthread; 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
-  #pragma omp parallel
+  #pragma omp parallel shared(total)
   {
-    #pragma omp single nowait
-    {
-      reduce(arr, n);
+    for(int i=0;i<n;i++){
+      #pragma omp task private(result) if( i < limit)
+      result += arr[i];
     }
+    #pragma omp taskwait
+    total += result;
   }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
   
   std::chrono::duration<double> elapsed_seconds = endTime-startTime;
   
-  std::cout<<result<<std::endl;
+  std::cout<<total<<std::endl;
 
   std::cerr<<elapsed_seconds.count()<<std::endl;
 
