@@ -43,22 +43,32 @@ int main (int argc, char* argv[]) {
   int n = atoi(argv[1]);
   int nbthread = atoi(argv[2]);
   int * arr = new int [n];
-  float result = 0.0f;
-  float total = 0.0f;
+  int result = 0;
+  int start, end;
 
   omp_set_num_threads(nbthread);
   generateReduceData (arr, n);
-  int limit = n / nbthread; 
+  int gran = n / nbthread; 
   std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 
-  #pragma omp parallel shared(total)
+  #pragma omp parallel 
   {
-    for(int i=0;i<n;i++){
-      #pragma omp task private(result) if( i < limit)
-      result += arr[i];
+    #pragma omp single
+    for(int i=0; i<n; i+=gran){
+      int j,start=i, end=i+gran-1;
+      if(end > n){
+        end = n-1;
+      }
+      #pragma omp task 
+      { int p=0;
+        for(j=start;j<=end;j++)
+        {
+          p += arr[j];
+        }
+        #pragma omp critical
+        result += p;
+      }
     }
-    #pragma omp taskwait
-    total += result;
   }
   
   std::chrono::time_point<std::chrono::system_clock> endTime = std::chrono::system_clock::now();
