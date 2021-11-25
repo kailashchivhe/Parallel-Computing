@@ -1,0 +1,80 @@
+\documentclass{article}
+
+\usepackage{listings}
+\usepackage{fullpage}
+\usepackage{color}
+\usepackage{hyperref}
+\usepackage{graphics}
+\usepackage{graphicx}
+
+\newcommand{\question}{{\noindent \bf Question: }}
+\newcommand{\todo}[1]{{\bf #1}}
+
+\title{Assignment MPI: Process Symmetry and Collectives}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+The purpose of this assignment is for you to learn more about
+\begin{itemize}
+\item getting started with MPI by implementing a hello world
+\item implementing a static workload partitioning scheme in MPI on numerical integration using a reduction collective
+\end{itemize}
+
+As usual all time measurements are to be performed on the cluster.
+
+To be able to compile and run an MPI program on the cluster, {\bf you need to add
+	the line \texttt{module load mpich/3.3.1} at the end of the file
+	\texttt{.bashrc} located in the home directory of your account}. (log off and back in afterward.)
+
+To compile an MPI application, use the \texttt{mpicc} compiler in C
+and the \texttt{mpicxx} compiler in C++. They also serve as linker.
+To run an MPI application using 19 processes, you can run
+\texttt{mpirun -n 19 ./myprogram}. But you will need to have a proper
+node allocation first. And if you have a proper node allocation then
+specifying \texttt{-n} is not necessary because the cluster scheduler
+does that for you.
+
+To queue an MPI job on the cluster, you will need to specify how many nodes
+and how many cores per node you plan on using. You could use
+\texttt{sbatch --nodes=2 --ntasks-per-node=16} to request two nodes with 16 cores each. You can also use \texttt{sbatch --nodes=4 --ntasks-per-node=4}, to have 4 cores from 4 different nodes. There is
+currently a cap on the cluster that prevents you from requiring more than 32 processes in total. This is abstracted in the scaffolding.
+
+\section{Hello World}
+
+This problem is fairly simple. It consists in initializing the MPI
+application and getting each process to print a message of the form
+``I am process $i$ out of $P$. I am running on $machine$.''.
+
+\question Go into the \texttt{hello\_world/} directory and write the
+code in \texttt{hello.cpp}
+
+\question Run the code on mamba using \texttt{make run\_1x16},
+\texttt{make run\_2x8}, \texttt{make run\_4x8} and confirm that the
+run happen on different machines by looking at the output generated in
+the \texttt{run.sh.o$xyz$} files.
+
+\section{Numerical Integration : static} 
+
+Adapt the numerical integration application to make it use
+MPI in a simple way. The first MPI process should take the first $N/P$
+iterations of the loop, the second should take the next $N/P$
+iterations of the loop, etc.. The partial integration should be
+accumulated on rank 0 so that it can print the correct answer to
+\texttt{stdout} and the time it took to \texttt{stderr}.
+
+\question Go into the \texttt{num\_int/} directory. Write the code in
+\texttt{mpi\_num\_int.cpp}.
+
+\question Run and time that program on mamba using many
+configurations. Use the \texttt{make bench} to queue all the
+jobs. (Note that if you run \texttt{make bench} twice, all your
+previously queued jobs will be deleted.)
+
+\question Generate figures of the results using \texttt{make plot}. Do
+you observe speedup higher than can be achieved on a single machine?
+
+\end{document}
