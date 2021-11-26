@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <chrono>
 #include <mpi.h>
+#include <chrono>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,29 +20,7 @@ float f4(float x, int intensity);
 }
 #endif
 
-double calc_numerical_integration(int functionid, float a, float b, int n, int intensity, int start, int end )
-{
-    float x;
-    float t1 = (b - a) / n;
-    double sum = 0.0L;
-    for( int i=start ; i<end ; i++ )
-    {
-        x = a + ((i + 0.5) * t1);
-        switch(functionid)
-        {
-            case 1: sum += f1(x,intensity);
-                break;
-            case 2: sum += f2(x,intensity);
-                break;
-            case 3: sum += f3(x,intensity);
-                break;
-            case 4: sum += f4(x,intensity);
-                break;
-            default: return -1;
-        }
-    }
-    return (t1*sum);
-}
+float (*function) (float,int);
 
 int main (int argc, char* argv[]) {
   
@@ -49,74 +28,80 @@ int main (int argc, char* argv[]) {
     std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
     return -1;
   }
-  int n, process, function_id, intensity, rank, elements_per_process, n_chunk_received, start_received;
-  float my_result, a, b,result;
-  MPI_Status status;
-  
-  function_id = atoi(argv[1]);
-  a = atof(argv[2]);
-  b = atof(argv[3]);
-  n = atoi(argv[4]);
-  intensity = atoi(argv[5]);
+  MPI_Comm comm;
+  int rank, size;
 
-  double starttime, endtime;
+  MPI_Init(&argc, &argv);
 
-  MPI_Init(&argc,&argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &process);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  starttime = MPI_Wtime();
+  int a = atoi(argv[2]);
+  int n = atoi(argv[4]);
+  int intensity = atoi(argv[5]);
+  int chunkSize = n / size;
+  int tag = MPI_ANY_TAG;
+  double globalResult = 0.0;
+  float multiplier = (atoi(argv[3]) - a) / (float)n;
+
+  switch (atoi(argv[1]))
+  {
+  case 1:
+    function = &f1;
+    break;
+  case 2:
+    function = &f2;
+    break;
+  case 3:
+    function = &f3;
+    break;
+  case 4:
+    function = &f4;
+    break;
+  default:
+    std::cerr << "Invalid function number provided\n";
+    return -1;
+  }
+  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+
+  int arrStart = rank * chunkSize;
+  int arrEnd = (rank + 1) * chunkSize;
+  if (rank == size - 1)
+  {
+    arrEnd = n;
+  }
+  double result = 0.0;
+  //compute local result
+  for (int x = arrStart; x < arrEnd; x++)
+  {
+    result += (double)function(a + (x + 0.5) * multiplier, intensity) * multiplier;
+  }
+  //send to master node
+  if (rank != 0)
+  {
+    MPI_Send(&result, 1, MPI_DOUBLE_PRECISION, 0, 100 + rank, MPI_COMM_WORLD);
+  }
+  //receive as master node and add together
+  else
+  {
+    globalResult = result;
+    for (int x = 1; x < size; ++x)
+    {
+      MPI_Status status;
+      MPI_Recv(&result, 1, MPI_DOUBLE_PRECISION, x, 100 + x, MPI_COMM_WORLD, &status);
+      globalResult += result;
+    }
+  }
+
+  MPI_Finalize();
+  std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end - start;
 
   if (rank == 0)
   {
-    int chunk = n/process;
-    int index,i;
-    result = my_result;
-    for (i = 1; i < process-1; i++)
-    {
-      index = i * elements_per_process;
-      MPI_Send(&chunk, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-      MPI_Send(&index, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-    }
-    index = i * elements_per_process;
-    int elements_left = n - index;
-    MPI_Send(&elements_left, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-    MPI_Send(&index, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-
-    float sum = 0;
-    sum = calc_numerical_integration(function_id, a, b, n, intensity, 0, chunk );
-    float tmp;
-    for (i = 1; i < process; i++)
-    {
-      MPI_Recv(&tmp, 1, MPI_INT,
-               MPI_ANY_SOURCE, 0,
-               MPI_COMM_WORLD,
-               &status);
-      int sender = status.MPI_SOURCE;
-      sum += tmp;
-    }
-
-    std::cout<<sum;  
+    std::cout << globalResult << std::endl;
+    std::cerr << elapsed_seconds.count() << std::endl;
   }
-  else
-  {
-    MPI_Recv(&n_chunk_received, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-
-    MPI_Recv(&start_received, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-
-    float partial_sum = 0;
-
-    partial_sum = calc_numerical_integration(function_id, a, b, n, intensity, start_received, n_chunk_received );
-
-    MPI_Send(&partial_sum, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-  }
-
-  
-  endtime = MPI_Wtime();
-  
-  MPI_Finalize();
-
-  std::cerr<<endtime-starttime<<std::endl;
 
   return 0;
 }
