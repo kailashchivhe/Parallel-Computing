@@ -36,15 +36,16 @@ int main (int argc, char* argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  int function_id = atoi(argv[1]);
   int a = atoi(argv[2]);
+  int b = atoi(argv[3]);
   int n = atoi(argv[4]);
   int intensity = atoi(argv[5]);
   int chunkSize = n / size;
-  int tag = MPI_ANY_TAG;
   double globalResult = 0.0;
-  float multiplier = (atoi(argv[3]) - a) / (float)n;
+  float x = ( b - a ) / (float)n;
 
-  switch (atoi(argv[1]))
+  switch (function_id)
   {
   case 1:
     function = &f1;
@@ -71,17 +72,16 @@ int main (int argc, char* argv[]) {
     arrEnd = n;
   }
   double result = 0.0;
-  //compute local result
+
   for (int x = arrStart; x < arrEnd; x++)
   {
-    result += (double)function(a + (x + 0.5) * multiplier, intensity) * multiplier;
+    result += (double)function(a + (x + 0.5) * x, intensity) * x;
   }
-  //send to master node
+
   if (rank != 0)
   {
     MPI_Send(&result, 1, MPI_DOUBLE_PRECISION, 0, 100 + rank, MPI_COMM_WORLD);
   }
-  //receive as master node and add together
   else
   {
     globalResult = result;
@@ -94,7 +94,9 @@ int main (int argc, char* argv[]) {
   }
 
   MPI_Finalize();
+
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+
   std::chrono::duration<double> elapsed_seconds = end - start;
 
   if (rank == 0)
