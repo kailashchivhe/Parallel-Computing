@@ -27,7 +27,7 @@ double calc_numerical_integration(int functionid, float a, float b, int n, int i
     for( int i=start ; i<end ; i++ )
     {
         x = a + ((i + 0.5) * t1);
-        switch(function_id)
+        switch(functionid)
         {
             case 1: sum += f1(x,intensity);
                 break;
@@ -102,7 +102,7 @@ int main (int argc, char* argv[]) {
   {
     MPI_Recv(&n_chunk_received, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 
-    MPI_Recv(&start_received, n_elements_recieved, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+    MPI_Recv(&start_received, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 
     float partial_sum = 0;
 
