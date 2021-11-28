@@ -3,11 +3,13 @@
 #include <iostream>
 
 int main(int argc, char*argv[]) {
-    int i, id, p;
+    int id, p, size;
+    char machine_name[100];
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
     MPI_Comm_size(MPI_COMM_WORLD, &p);
-    printf("I am Process %d is out of %d \n", id, p);
+    MPI_Get_processor_name(machine_name,&size);
+    printf("I am Process %d out of %d. Running on %s\n", id, p, machine_name );
     MPI_Finalize();
     return 0;
 }
