@@ -25,6 +25,7 @@ float f4(float x, int intensity);
 }
 #endif
 
+float (*function) (float,int);
 
 int main (int argc, char* argv[]) {
 
@@ -32,7 +33,7 @@ int main (int argc, char* argv[]) {
     std::cerr<<"usage: mpirun "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
     return -1;
   }
-  
+
   int a = atoi(argv[2]);
   int n = atoi(argv[4]);
   int intensity = atoi(argv[5]);
