@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <mpi.h>
+#include <tuple>
 
 #define ARR_START_SEND 100
 #define ARR_START_RECV 100
@@ -15,6 +16,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+using namespace std;
 
 float f1(float x, int intensity);
 float f2(float x, int intensity);

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <mpi.h>
+#include <tuple>
 
 #define ARR_START_SEND 100
 #define ARR_START_RECV 100
@@ -11,6 +12,8 @@
 #define ARR_END_RECV 101
 #define RESULT_TAG 1000
 #define MASTER 0
+
+using namespace std;
 
 #ifdef __cplusplus
 extern "C" {
