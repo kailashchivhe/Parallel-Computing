@@ -130,7 +130,6 @@ int main (int argc, char* argv[]) {
     while(Received_work[1]!=-1)
 		{
 			int localSum = 0;
-			f = 0;
 			for(int x=Received_work[0];x<Received_work[1];x++)
 			{
         localSum += (double)function(a + (x + 0.5) * x, intensity) * x;
