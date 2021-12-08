@@ -76,70 +76,69 @@ int main (int argc, char* argv[]) {
   std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
   if (rank == 0)
   {
+    int total_work_sent = 0, send_work[2], Received_status, final;
     for (int i = 1; i < size; i++)
     {
-      //send start index to processes
-      MPI_Send(&arrIndex, 1, MPI_INT, i, ARR_START_SEND, MPI_COMM_WORLD);
-
-      arrIndex += chunkSize;
-      if (arrIndex >= n)
+      send_work[0] = (i - 1) * chunkSize;
+      send_work[1] = i * chunkSize;
+      final = send_work[1];
+      total_work_sent++;
+      if (send_work[0] >= n)
       {
-        arrIndex = n;
-      }
-      //send end index to processes
-      MPI_Send(&arrIndex, 1, MPI_INT, i, ARR_END_SEND, MPI_COMM_WORLD);
-    }
-    sleep(1);
-    for (int i = 0; i < size;)
-    {
-      //receive result from each rank
-      MPI_Recv(&receivedResult, 1, MPI_DOUBLE_PRECISION, MPI_ANY_SOURCE, RESULT_TAG, MPI_COMM_WORLD, &status);
-      //add it to local result
-      integralPartial += receivedResult;
-      if (arrIndex >= n)
-      {
-        //send size to processes
-        MPI_Send(&n, 1, MPI_INT, status.MPI_SOURCE, ARR_START_SEND, MPI_COMM_WORLD);
-        i++;
+        send_work[0] = -1;
+        send_work[1] = -1;
+        total_work_sent--;
       }
       else
       {
-        //send start index of new chunk
-        MPI_Send(&arrIndex, 1, MPI_INT, status.MPI_SOURCE, ARR_START_SEND, MPI_COMM_WORLD);
-        arrIndex += chunkSize;
-        if (arrIndex >= n)
+        if (send_work[1] > n)
         {
-          arrIndex = n;
+          send_work[1] = n;
         }
-        //sned end index of new chunk
-        MPI_Send(&arrIndex, 1, MPI_INT, status.MPI_SOURCE, ARR_END_SEND, MPI_COMM_WORLD);
       }
+      MPI_Send(send_work, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+    }
+    MPI_Status status;
+    while (total_work_sent != 0)
+    {
+      MPI_Recv(&Received_status, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
+      total_work_sent--;
+      globalResult = globalResult + Received_status;
+      send_work[0] = final;
+      send_work[1] = final + chunkSize;
+      final = send_work[1];
+      total_work_sent++;
+      if (send_work[0] >= n)
+      {
+        send_work[0] = -1;
+        send_work[1] = -1;
+        total_work_sent--;
+      }
+      else
+      {
+        if (send_work[1] > n)
+        {
+          send_work[1] = n;
+        }
+      }
+      MPI_Send(send_work, 2, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
     }
   }
-  else
-  {
-    while (true)
-    {
-      //keep receiving start indexs until integration is complete
-      MPI_Recv(&startIndex, 1, MPI_INT, MASTER, ARR_START_RECV, MPI_COMM_WORLD, &status);
-      if (startIndex == n)
-      {
-        double scapegoat = 0.0;
-        MPI_Send(&scapegoat, 1, MPI_DOUBLE_PRECISION, MASTER, RESULT_TAG, MPI_COMM_WORLD);
-        break;
-      }
-      //keep receiving end indexs until integration is complete
-      MPI_Recv(&endIndex, 1, MPI_INT, MASTER, ARR_END_RECV, MPI_COMM_WORLD, &status);
-
-      double result = 0.0;
-      for (int x = startIndex; x < endIndex; x++)
-      {
-        result += (double)function(a + (x + 0.5) * multiplier, intensity) * multiplier;
-      }
-
-      // send result to master node
-      MPI_Send(&result, 1, MPI_DOUBLE_PRECISION, MASTER, RESULT_TAG, MPI_COMM_WORLD);
-    }
+  else{
+    int Received_work[2], Send_status;
+    MPI_Recv(Received_work,2,MPI_INT,0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+    while(Received_work[1]!=-1)
+		{
+			int localSum = 0;
+			f = 0;
+			for(int x=Received_work[0];x<Received_work[1];x++)
+			{
+        localSum += (double)function(a + (x + 0.5) * x, intensity) * x;
+			}
+			Send_status = localSum;
+			MPI_Send(&Send_status,1,MPI_INT,0,0,MPI_COMM_WORLD);
+			MPI_Recv(Received_work,2,MPI_INT,0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+		}
   }
   MPI_Finalize();
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
@@ -147,7 +146,7 @@ int main (int argc, char* argv[]) {
   if (rank == 0)
   {
     std::cerr << elapsed_seconds.count() << std::endl;
-    std::cout << integralPartial << std::endl;
+    std::cout << globalResult << std::endl;
   }
   return 0;
 }
