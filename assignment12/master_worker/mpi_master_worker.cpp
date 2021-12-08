@@ -115,7 +115,6 @@ int main (int argc, char* argv[]) {
         MPI_Send(&arrIndex, 1, MPI_INT, status.MPI_SOURCE, ARR_END_SEND, MPI_COMM_WORLD);
       }
     }
-    std::cout << integralPartial << std::endl;
   }
   else
   {
@@ -148,6 +147,7 @@ int main (int argc, char* argv[]) {
   if (rank == 0)
   {
     std::cerr << elapsed_seconds.count() << std::endl;
+    std::cout << integralPartial << std::endl;
   }
   return 0;
 }
