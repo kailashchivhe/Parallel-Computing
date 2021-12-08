@@ -31,8 +31,8 @@ float f4(float x, int intensity);
 #define INITIAL_WORK_REQ 1
 #define QUIT 1
 
-
-float func_selector(int func_id, float x, int intensity) {
+float func_selector(int func_id, float x, int intensity)
+{
   switch (func_id)
   {
   case 1:
@@ -64,15 +64,13 @@ float computeIntegral(int start, int end, int function_id, int intensity, float 
 std::tuple<int, int> getData(int req_id, long n, int nbprocess)
 {
   nbprocess = nbprocess - 1;
-  int gran = n / (3*nbprocess);
+  int gran = n / (3 * nbprocess);
   int start_ptr = req_id * gran;
   int end_ptr = start_ptr + gran;
-
-  if ((n % nbprocess != 0) && (end_ptr > n))
+  if ((n % (3 * nbprocess) != 0) && (end_ptr > n))
   {
     end_ptr = n;
   }
-
   return std::make_tuple(start_ptr, end_ptr);
 }
 
@@ -129,6 +127,7 @@ float master(long n, int nbprocess)
       work[1] = end;
       MPI_Send(work, 2, MPI_INT, id, 0, MPI_COMM_WORLD);
     }
+
     else
     {
       MPI_Send(0, 0, MPI_INT, id, QUIT, MPI_COMM_WORLD);
@@ -152,7 +151,6 @@ void worker(int function_id, int intensity, float a, float b, long n)
       int start = work[0];
       int end = work[1];
       result = computeIntegral(start, end, function_id, intensity, a, b, n);
-
       MPI_Send(&result, 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
     }
     else
@@ -169,11 +167,11 @@ int main(int argc, char *argv[])
     std::cerr << "usage: mpirun " << argv[0] << " <functionid> <a> <b> <n> <intensity>" << std::endl;
     return -1;
   }
-
   int function_id, intensity;
   long int n;
   float a, b;
   float result = 0.0;
+  
   MPI_Init(NULL, NULL);
 
   int nbprocess;
