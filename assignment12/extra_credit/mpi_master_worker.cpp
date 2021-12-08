@@ -1,23 +1,18 @@
-#include <iostream>
-#include <ratio>
-#include <chrono>
-#include <stdlib.h>
-#include <unistd.h>
 #include <mpi.h>
+#include <chrono>
+#include <iostream>
+#include <string>
+#include <stdexcept>
+#include <cstdlib>
 #include <tuple>
 
-#define ARR_START_SEND 100
-#define ARR_START_RECV 100
-#define ARR_END_SEND 101
-#define ARR_END_RECV 101
-#define RESULT_TAG 1000
-#define MASTER 0
-
 using namespace std;
+ using namespace std::chrono;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 float f1(float x, int intensity);
 float f2(float x, int intensity);
@@ -67,6 +62,7 @@ std::tuple<int, int> getData(int req_id, long n, int nbprocess)
   int gran = n / (3 * nbprocess);
   int start_ptr = req_id * gran;
   int end_ptr = start_ptr + gran;
+
   if ((n % (3 * nbprocess) != 0) && (end_ptr > n))
   {
     end_ptr = n;
@@ -133,7 +129,6 @@ float master(long n, int nbprocess)
       MPI_Send(0, 0, MPI_INT, id, QUIT, MPI_COMM_WORLD);
     }
   }
-
   return final_result;
 }
 
@@ -162,6 +157,7 @@ void worker(int function_id, int intensity, float a, float b, long n)
 
 int main(int argc, char *argv[])
 {
+
   if (argc < 6)
   {
     std::cerr << "usage: mpirun " << argv[0] << " <functionid> <a> <b> <n> <intensity>" << std::endl;
@@ -171,12 +167,10 @@ int main(int argc, char *argv[])
   long int n;
   float a, b;
   float result = 0.0;
-  
   MPI_Init(NULL, NULL);
 
-  int nbprocess;
+  int nbprocess,rank;
   MPI_Comm_size(MPI_COMM_WORLD, &nbprocess);
-  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   sscanf(argv[1], "%i", &function_id);
@@ -206,5 +200,6 @@ int main(int argc, char *argv[])
   }
 
   MPI_Finalize();
+
   return 0;
 }
