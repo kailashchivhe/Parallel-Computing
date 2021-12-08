@@ -61,7 +61,7 @@ float computeIntegral(int start, int end, int function_id, int intensity, float 
 std::tuple<int, int> getData(int req_id, long n, int nbprocess)
 {
   nbprocess = nbprocess - 1;
-  int gran = n / (nbprocess);
+  int gran = n / (3*nbprocess);
   int start_ptr = req_id * gran;
   int end_ptr = start_ptr + gran;
 
@@ -76,7 +76,6 @@ std::tuple<int, int> getData(int req_id, long n, int nbprocess)
 float master(long n, int nbprocess)
 {
   int is_inital_req = 0;
-  MPI_Status status;
   float final_result = 0.0;
   int req_id = -1;
   int work_sent = 0;
@@ -85,30 +84,35 @@ float master(long n, int nbprocess)
 
   for (int i = 1; i < nbprocess; i++)
   {
-    if (end < n)
+    MPI_Status *status;
+    MPI_Request *request;
+    request = new MPI_Request[3];
+    status = new MPI_Status[3];
+    for (int j = 0; j < 3; j++)
     {
-      req_id++;
-      work_sent++;
-      std::tie(start, end) = getData(req_id, n, nbprocess);
-      int work[2] = {0};
-      work[0] = start;
-      work[1] = end;
-      MPI_Send(work, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+      if (end < n)
+      {
+        req_id++;
+        work_sent++;
+        std::tie(start, end) = getData(req_id, n, nbprocess);
+        int work[2] = {0};
+        work[0] = start;
+        work[1] = end;
+        MPI_Isend(work, 2, MPI_INT, i, 0, MPI_COMM_WORLD, &request[j]);
+      }
+      else
+      {
+        MPI_Isend(0, 0, MPI_INT, i, QUIT, MPI_COMM_WORLD, &request[j]);
+      }
     }
-
-    else
-    {
-      MPI_Send(0, 0, MPI_INT, i, QUIT, MPI_COMM_WORLD);
-    }
+    MPI_Waitall(3, request, status);
   }
 
   while (work_sent != 0)
   {
     MPI_Status status;
-    //Receive the result
     MPI_Recv(&result, 1, MPI_FLOAT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
     int id = status.MPI_SOURCE;
-    //get result
     final_result += result;
     work_sent--;
 
@@ -122,12 +126,12 @@ float master(long n, int nbprocess)
       work[1] = end;
       MPI_Send(work, 2, MPI_INT, id, 0, MPI_COMM_WORLD);
     }
-
     else
     {
       MPI_Send(0, 0, MPI_INT, id, QUIT, MPI_COMM_WORLD);
     }
   }
+
   return final_result;
 }
 
