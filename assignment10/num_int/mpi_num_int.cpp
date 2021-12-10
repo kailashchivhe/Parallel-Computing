@@ -52,10 +52,11 @@ void mpi_numint(int f, float a, float b, int intensity, int n, int myrank, int m
     cout << fullsum;
 }
 
-int main (int argc, char* argv[]) {
-  
-  if (argc < 6) {
-    std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
+int main(int argc, char *argv[])
+{
+  if (argc < 6)
+  {
+    std::cerr << "usage: " << argv[0] << " <functionid> <a> <b> <n> <intensity>" << std::endl;
     return 0;
   }
 
@@ -64,29 +65,25 @@ int main (int argc, char* argv[]) {
   float b = atof(argv[3]);
   int n = atoi(argv[4]);
   int intensity = atoi(argv[5]);
-  int myrank,mysize;
+  int myrank, mysize;
   MPI_Init(NULL, NULL);
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &mysize);
-  std::chrono::time_point<std::chrono::system_clock> start; 
-  
-  if(myrank ==0)
-      start = std::chrono::system_clock::now();
+  std::chrono::time_point<std::chrono::system_clock> start;
 
-  mpi_numint(funcid,a,b,intensity,n,myrank,mysize);
+  if (myrank == 0)
+  {
+    start = std::chrono::system_clock::now();
+  }
 
+  mpi_numint(funcid, a, b, intensity, n, myrank, mysize);
 
   MPI_Finalize();
-  if(myrank==0)
+  if (myrank == 0)
   {
-  std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
-
-  std::chrono::duration<double> elapsed_seconds = end-start;
-
-  std::cerr<<elapsed_seconds.count()<<std::endl;
+    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cerr << elapsed_seconds.count() << std::endl;
   }
-  
-
-
   return 0;
 }
