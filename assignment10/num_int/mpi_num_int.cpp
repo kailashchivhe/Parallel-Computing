@@ -20,90 +20,73 @@ float f4(float x, int intensity);
 }
 #endif
 
-float (*function) (float,int);
+void mpi_numint(int f, float a, float b, int intensity, int n, int myrank, int mysize)
+{
+  float pre_product = (b - a) / n;
+  float function_eval;
+  int N = n;
+  int P = mysize;
+  float mysummed_value = 0;
+  float fullsum;
+  for (int i = (myrank)*N / P; i < (myrank + 1) * N / P; i++)
+  {
+    switch (f)
+    {
+    case 1:
+      mysummed_value += f1(a + (i + 0.5) * pre_product, intensity);
+      break;
+    case 2:
+      mysummed_value += f2(a + (i + 0.5) * pre_product, intensity);
+      break;
+    case 3:
+      mysummed_value += f3(a + (i + 0.5) * pre_product, intensity);
+      break;
+    case 4:
+      mysummed_value += f4(a + (i + 0.5) * pre_product, intensity);
+      break;
+    }
+  }
+  mysummed_value = pre_product * (mysummed_value);
+  MPI_Reduce(&mysummed_value, &fullsum, 1, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+  if (myrank == 0)
+    cout << fullsum;
+}
 
 int main (int argc, char* argv[]) {
   
   if (argc < 6) {
     std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
-    return -1;
+    return 0;
   }
-  MPI_Comm comm;
-  int rank, size;
 
-  MPI_Init(&argc, &argv);
-
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  int function_id = atoi(argv[1]);
-  int a = atoi(argv[2]);
-  int b = atoi(argv[3]);
+  int funcid = atoi(argv[1]);
+  float a = atof(argv[2]);
+  float b = atof(argv[3]);
   int n = atoi(argv[4]);
   int intensity = atoi(argv[5]);
-  int chunkSize = n / size;
-  double globalResult = 0.0;
-  float x = ( b - a ) / (float)n;
+  int myrank,mysize;
+  MPI_Init(NULL, NULL);
+  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+  MPI_Comm_size(MPI_COMM_WORLD, &mysize);
+  std::chrono::time_point<std::chrono::system_clock> start; 
+  
+  if(myrank ==0)
+      start = std::chrono::system_clock::now();
 
-  switch (function_id)
-  {
-  case 1:
-    function = &f1;
-    break;
-  case 2:
-    function = &f2;
-    break;
-  case 3:
-    function = &f3;
-    break;
-  case 4:
-    function = &f4;
-    break;
-  default:
-    std::cerr << "Invalid function number provided\n";
-    return -1;
-  }
-  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+  mpi_numint(funcid,a,b,intensity,n,myrank,mysize);
 
-  int arrStart = rank * chunkSize;
-  int arrEnd = (rank + 1) * chunkSize;
-  if (rank == size - 1)
-  {
-    arrEnd = n;
-  }
-  double result = 0.0;
-
-  for (int x = arrStart; x < arrEnd; x++)
-  {
-    result += (double)function(a + (x + 0.5) * x, intensity) * x;
-  }
-
-  if (rank != 0)
-  {
-    MPI_Send(&result, 1, MPI_DOUBLE_PRECISION, 0, 100 + rank, MPI_COMM_WORLD);
-  }
-  else
-  {
-    globalResult = result;
-    for (int x = 1; x < size; ++x)
-    {
-      MPI_Status status;
-      MPI_Recv(&result, 1, MPI_DOUBLE_PRECISION, x, 100 + x, MPI_COMM_WORLD, &status);
-      globalResult += result;
-    }
-  }
 
   MPI_Finalize();
-
+  if(myrank==0)
+  {
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
 
-  std::chrono::duration<double> elapsed_seconds = end - start;
+  std::chrono::duration<double> elapsed_seconds = end-start;
 
-  if (rank == 0)
-  {
-    std::cout << globalResult << std::endl;
-    std::cerr << elapsed_seconds.count() << std::endl;
+  std::cerr<<elapsed_seconds.count()<<std::endl;
   }
+  
+
 
   return 0;
 }
