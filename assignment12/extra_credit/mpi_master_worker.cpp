@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
   long int size;
   float a, b;
   float result = 0.0;
-  
+
   MPI_Init(NULL, NULL);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocess);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
   }
   else
   {
-    workerTask(function_id, intensity, a, b, size);
+    workerTask(functionId, intensity, a, b, size);
   }
 
   high_resolution_clock::time_point end = high_resolution_clock::now();
