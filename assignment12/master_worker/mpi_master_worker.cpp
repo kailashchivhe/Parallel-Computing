@@ -115,10 +115,10 @@ float masterTask(long size, int nprocess)
     {
       index++;
       work_sent++;
-      std::tie(start, end) = getData(index, size, nprocess);
+      Data d = getData(index, size, nprocess);
       int work[2] = {0};
-      work[0] = start;
-      work[1] = end;
+      work[0] = d.start;
+      work[1] = d.end;
       MPI_Send(work, 2, MPI_INT, id, 0, MPI_COMM_WORLD);
     }
     else
