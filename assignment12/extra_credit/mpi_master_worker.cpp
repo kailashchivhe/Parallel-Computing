@@ -24,6 +24,8 @@ float f4(float x, int intensity);
 #endif
 
 #define QUIT 1
+#define LARGE_CHUNK_SIZE 3
+#define SEND_RECEIVE_DATA_COUNT 2
 
 float getFunctionData(int functionId, float x, int intensity)
 {
@@ -58,11 +60,11 @@ float calculateIntegral(int start, int end, int functionId, int intensity, float
 std::tuple<int, int> getData(int index, long size, int nprocess)
 {
   nprocess = nprocess - 1;
-  int chunk = size / (3 * nprocess);
+  int chunk = size / (LARGE_CHUNK_SIZE * nprocess);
   int start = index * chunk;
   int end = start + chunk;
 
-  if ((size % (3 * nprocess) != 0) && (end > size))
+  if ((size % (LARGE_CHUNK_SIZE * nprocess) != 0) && (end > size))
   {
     end = size;
   }
@@ -93,7 +95,7 @@ float masterTask(long size, int nprocess)
         int work[2] = {0};
         work[0] = start;
         work[1] = end;
-        MPI_Isend(work, 2, MPI_INT, i, 0, MPI_COMM_WORLD, &request[j]);
+        MPI_Isend(work, SEND_RECEIVE_DATA_COUNT, MPI_INT, i, 0, MPI_COMM_WORLD, &request[j]);
       }
       else
       {
@@ -119,7 +121,7 @@ float masterTask(long size, int nprocess)
       int work[2] = {0};
       work[0] = start;
       work[1] = end;
-      MPI_Send(work, 2, MPI_INT, id, 0, MPI_COMM_WORLD);
+      MPI_Send(work, SEND_RECEIVE_DATA_COUNT, MPI_INT, id, 0, MPI_COMM_WORLD);
     }
     else
     {
@@ -136,7 +138,7 @@ void workerTask(int functionId, int intensity, float a, float b, long n)
   MPI_Status status;
   while (1)
   {
-    MPI_Recv(work, 2, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    MPI_Recv(work, SEND_RECEIVE_DATA_COUNT, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
     int tag = status.MPI_TAG;
     if (tag != QUIT)
     {

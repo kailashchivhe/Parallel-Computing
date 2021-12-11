@@ -21,6 +21,7 @@ float f4(float x, int intensity);
 
 #define MASTER 0
 #define QUIT 1
+#define SEND_RECEIVE_DATA_COUNT 2
 
 using namespace std;
 using namespace std::chrono;
@@ -86,7 +87,7 @@ float masterTask(long size, int nprocess)
       int work[2] = {0};
       work[0] = start;
       work[1] = end;
-      MPI_Send(work, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+      MPI_Send(work, SEND_RECEIVE_DATA_COUNT, MPI_INT, i, 0, MPI_COMM_WORLD);
     }
     else
     {
@@ -112,7 +113,7 @@ float masterTask(long size, int nprocess)
       int work[2] = {0};
       work[0] = start;
       work[1] = end;
-      MPI_Send(work, 2, MPI_INT, id, 0, MPI_COMM_WORLD);
+      MPI_Send(work, SEND_RECEIVE_DATA_COUNT, MPI_INT, id, 0, MPI_COMM_WORLD);
     }
     else
     {
@@ -129,7 +130,7 @@ void workerTask(int functionId, int intensity, float a, float b, long size)
   MPI_Status status;
   while (1)
   {
-    MPI_Recv(work, 2, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    MPI_Recv(work, SEND_RECEIVE_DATA_COUNT, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
     int tag = status.MPI_TAG;
     if (tag != QUIT)
     {
