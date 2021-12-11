@@ -160,13 +160,12 @@ int main(int argc, char *argv[])
     std::cerr << "usage: mpirun " << argv[0] << " <functionid> <a> <b> <n> <intensity>" << std::endl;
     return -1;
   }
-  int functionId, intensity;
+  int functionId, intensity, nprocess,rank;
   long int size;
   float a, b;
   float result = 0.0;
+  
   MPI_Init(NULL, NULL);
-
-  int nprocess,rank;
   MPI_Comm_size(MPI_COMM_WORLD, &nprocess);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
