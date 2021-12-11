@@ -122,7 +122,7 @@ float masterTask(long size, int nprocess)
   return finalResult;
 }
 
-void workerTask(int function_id, int intensity, float a, float b, long size)
+void workerTask(int functionId, int intensity, float a, float b, long size)
 {
   float result = 0.0;
   int work[2] = {0};
@@ -135,7 +135,7 @@ void workerTask(int function_id, int intensity, float a, float b, long size)
     {
       int start = work[0];
       int end = work[1];
-      result = calculateIntegral(start, end, function_id, intensity, a, b, size);
+      result = calculateIntegral(start, end, functionId, intensity, a, b, size);
       MPI_Send(&result, 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
     }
     else
