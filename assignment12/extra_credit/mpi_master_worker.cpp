@@ -7,7 +7,7 @@
 #include <tuple>
 
 using namespace std;
- using namespace std::chrono;
+using namespace std::chrono;
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,12 +23,11 @@ float f4(float x, int intensity);
 }
 #endif
 
-#define INITIAL_WORK_REQ 1
 #define QUIT 1
 
-float func_selector(int func_id, float x, int intensity)
+float getFunctionData(int functionId, float x, int intensity)
 {
-  switch (func_id)
+  switch (functionId)
   {
   case 1:
     return f1(x, intensity);
@@ -43,43 +42,42 @@ float func_selector(int func_id, float x, int intensity)
   }
 }
 
-float computeIntegral(int start, int end, int function_id, int intensity, float a, float b, long n)
+float calculateIntegral(int start, int end, int functionId, int intensity, float a, float b, long size)
 {
   float result = 0.0;
-  float width = (b - a) / float(n);
+  float width = (b - a) / float(size);
   for (int i = start; i < end; i++)
   {
     float x = (a + (i + 0.5) * width);
-    float func = func_selector(function_id, x, intensity);
+    float func = getFunctionData(functionId, x, intensity);
     result = result + (width * func);
   }
   return result;
 }
 
-std::tuple<int, int> getData(int req_id, long n, int nbprocess)
+std::tuple<int, int> getData(int index, long size, int nprocess)
 {
-  nbprocess = nbprocess - 1;
-  int gran = n / (3 * nbprocess);
-  int start_ptr = req_id * gran;
-  int end_ptr = start_ptr + gran;
+  nprocess = nprocess - 1;
+  int chunk = size / (3 * nprocess);
+  int start = index * chunk;
+  int end = start + chunk;
 
-  if ((n % (3 * nbprocess) != 0) && (end_ptr > n))
+  if ((size % (3 * nprocess) != 0) && (end > size))
   {
-    end_ptr = n;
+    end = size;
   }
-  return std::make_tuple(start_ptr, end_ptr);
+  return std::make_tuple(start, end);
 }
 
-float master(long n, int nbprocess)
+float masterTask(long size, int nprocess)
 {
-  int is_inital_req = 0;
-  float final_result = 0.0;
-  int req_id = -1;
+  float finalResult = 0.0;
+  int index = -1;
   int work_sent = 0;
   int start, end = 0;
   float result = 0.0;
 
-  for (int i = 1; i < nbprocess; i++)
+  for (int i = 1; i < nprocess; i++)
   {
     MPI_Status *status;
     MPI_Request *request;
@@ -87,11 +85,11 @@ float master(long n, int nbprocess)
     status = new MPI_Status[3];
     for (int j = 0; j < 3; j++)
     {
-      if (end < n)
+      if (end < size)
       {
-        req_id++;
+        index++;
         work_sent++;
-        std::tie(start, end) = getData(req_id, n, nbprocess);
+        std::tie(start, end) = getData(index, size, nprocess);
         int work[2] = {0};
         work[0] = start;
         work[1] = end;
@@ -110,29 +108,28 @@ float master(long n, int nbprocess)
     MPI_Status status;
     MPI_Recv(&result, 1, MPI_FLOAT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
     int id = status.MPI_SOURCE;
-    final_result += result;
+    finalResult += result;
     work_sent--;
 
-    if (end < n)
+    if (end < size)
     {
-      req_id++;
+      index++;
       work_sent++;
-      std::tie(start, end) = getData(req_id, n, nbprocess);
+      std::tie(start, end) = getData(index, size, nprocess);
       int work[2] = {0};
       work[0] = start;
       work[1] = end;
       MPI_Send(work, 2, MPI_INT, id, 0, MPI_COMM_WORLD);
     }
-
     else
     {
       MPI_Send(0, 0, MPI_INT, id, QUIT, MPI_COMM_WORLD);
     }
   }
-  return final_result;
+  return finalResult;
 }
 
-void worker(int function_id, int intensity, float a, float b, long n)
+void workerTask(int functionId, int intensity, float a, float b, long n)
 {
   float result = 0.0;
   int work[2] = {0};
@@ -145,7 +142,7 @@ void worker(int function_id, int intensity, float a, float b, long n)
     {
       int start = work[0];
       int end = work[1];
-      result = computeIntegral(start, end, function_id, intensity, a, b, n);
+      result = calculateIntegral(start, end, functionId, intensity, a, b, n);
       MPI_Send(&result, 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
     }
     else
@@ -163,40 +160,39 @@ int main(int argc, char *argv[])
     std::cerr << "usage: mpirun " << argv[0] << " <functionid> <a> <b> <n> <intensity>" << std::endl;
     return -1;
   }
-  int function_id, intensity;
-  long int n;
+  int functionId, intensity;
+  long int size;
   float a, b;
   float result = 0.0;
   MPI_Init(NULL, NULL);
 
-  int nbprocess,rank;
-  MPI_Comm_size(MPI_COMM_WORLD, &nbprocess);
+  int nprocess,rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocess);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  sscanf(argv[1], "%i", &function_id);
-  sscanf(argv[2], "%f", &a);
-  sscanf(argv[3], "%f", &b);
-  sscanf(argv[4], "%ld", &n);
-  sscanf(argv[5], "%i", &intensity);
+  functionId = atoi(argv[1]);
+  a = atof(argv[2]);
+  b = atof(argv[3]);
+  size = atoi(argv[4]);
+  intensity = atoi(argv[5]);
 
-  using namespace std::chrono;
-  high_resolution_clock::time_point start_time = high_resolution_clock::now();
+  high_resolution_clock::time_point start = high_resolution_clock::now();
 
   if (rank == 0)
   {
-    result = master(n, nbprocess);
+    result = masterTask(size, nprocess);
   }
   else
   {
-    worker(function_id, intensity, a, b, n);
+    workerTask(function_id, intensity, a, b, size);
   }
 
-  high_resolution_clock::time_point end_time = high_resolution_clock::now();
-  duration<double> time_period = duration_cast<duration<double> >(end_time - start_time);
+  high_resolution_clock::time_point end = high_resolution_clock::now();
+  duration<double> elapsed = duration_cast<duration<double> >(end - start);
   if (rank == 0)
   {
     std::cout << result << std::endl;
-    std::cerr << time_period.count() << std::endl;
+    std::cerr << elapsed.count() << std::endl;
   }
 
   MPI_Finalize();
