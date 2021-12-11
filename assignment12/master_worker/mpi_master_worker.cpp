@@ -182,16 +182,11 @@ int main(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &nprocess);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  functionId = atoi(argv[1]);
-  a = atof(argv[2]);
-  b = atof(argv[3]);
-  size = atoi_l(argv[4]);
-  intensity = atoi(argv[5]);
-  // sscanf(argv[1], "%i", &functionId);
-  // sscanf(argv[2], "%f", &a);
-  // sscanf(argv[3], "%f", &b);
-  // sscanf(argv[4], "%ld", &n);
-  // sscanf(argv[5], "%i", &intensity);
+  sscanf(argv[1], "%i", &functionId);
+  sscanf(argv[2], "%f", &a);
+  sscanf(argv[3], "%f", &b);
+  sscanf(argv[4], "%ld", &size);
+  sscanf(argv[5], "%i", &intensity);
 
   high_resolution_clock::time_point start = high_resolution_clock::now();
 
