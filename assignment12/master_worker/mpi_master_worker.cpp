@@ -26,7 +26,8 @@ float f4(float x, int intensity);
 using namespace std;
 using namespace std::chrono;
 
-float getFunctionData(int functionId, float x, int intensity) {
+float getFunctionData(int functionId, float x, int intensity) 
+{
   switch (functionId)
   {
     case 1:

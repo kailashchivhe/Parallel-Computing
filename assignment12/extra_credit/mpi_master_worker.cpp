@@ -31,16 +31,16 @@ float getFunctionData(int functionId, float x, int intensity)
 {
   switch (functionId)
   {
-  case 1:
-    return f1(x, intensity);
-  case 2:
-    return f2(x, intensity);
-  case 3:
-    return f3(x, intensity);
-  case 4:
-    return f4(x, intensity);
-  default:
-    return -1;
+    case 1:
+      return f1(x, intensity);
+    case 2:
+      return f2(x, intensity);
+    case 3:
+      return f3(x, intensity);
+    case 4:
+      return f4(x, intensity);
+    default:
+      return -1;
   }
 }
 
