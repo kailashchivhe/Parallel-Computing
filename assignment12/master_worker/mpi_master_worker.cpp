@@ -24,6 +24,10 @@ float f4(float x, int intensity);
 
 using namespace std;
 using namespace std::chrono;
+struct Data{
+  int start,end;
+};
+typedef struct Data Data;
 
 float getFunctionData(int functionId, float x, int intensity) {
   switch (functionId)
@@ -54,8 +58,9 @@ float calculateIntegral(int start, int end, int functionId, int intensity, float
   return result;
 }
 
-std::tuple<int, int> getData(int index, long size, int nprocess)
+Data getData(int index, long size, int nprocess)
 {
+  Data d;
   nprocess = nprocess - 1;
   int chunk = size / (nprocess);
   int start = index * chunk;
@@ -65,7 +70,9 @@ std::tuple<int, int> getData(int index, long size, int nprocess)
   {
     end = size;
   }
-  return std::make_tuple(start, end);
+  d.start = start;
+  d.end = end;
+  return d;
 }
 
 float masterTask(long size, int nprocess)
@@ -82,10 +89,10 @@ float masterTask(long size, int nprocess)
     {
       index++;
       work_sent++;
-      std::tie(start, end) = getData(index, size, nprocess);
+      Data d = getData(index, size, nprocess);
       int work[2] = {0};
-      work[0] = start;
-      work[1] = end;
+      work[0] = d.start;
+      work[1] = d.end;
       MPI_Send(work, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
     }
     else
@@ -162,11 +169,6 @@ int main(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &nprocess);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  // sscanf(argv[1], "%i", &functionId);
-  // sscanf(argv[2], "%f", &a);
-  // sscanf(argv[3], "%f", &b);
-  // sscanf(argv[4], "%ld", &size);
-  // sscanf(argv[5], "%i", &intensity);
   functionId = atoi(argv[1]);
   a = atof(argv[2]);
   b = atof(argv[3]);
