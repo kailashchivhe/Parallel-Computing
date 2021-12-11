@@ -24,10 +24,6 @@ float f4(float x, int intensity);
 
 using namespace std;
 using namespace std::chrono;
-struct Data{
-  int start,end;
-};
-typedef struct Data Data;
 
 float getFunctionData(int functionId, float x, int intensity) {
   switch (functionId)
