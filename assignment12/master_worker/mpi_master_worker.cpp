@@ -58,9 +58,8 @@ float calculateIntegral(int start, int end, int functionId, int intensity, float
   return result;
 }
 
-Data getData(int index, long size, int nprocess)
+std::tuple<int, int> getData(int index, long size, int nprocess)
 {
-  Data d;
   nprocess = nprocess - 1;
   int chunk = size / (nprocess);
   int start = index * chunk;
@@ -70,9 +69,7 @@ Data getData(int index, long size, int nprocess)
   {
     end = size;
   }
-  d.start = start;
-  d.end = end;
-  return d;
+  return std::make_tuple(start, end);
 }
 
 float masterTask(long size, int nprocess)
@@ -89,10 +86,10 @@ float masterTask(long size, int nprocess)
     {
       index++;
       work_sent++;
-      Data d = getData(index, size, nprocess);
+      std::tie(start, end) = getData(index, size, nprocess);
       int work[2] = {0};
-      work[0] = d.start;
-      work[1] = d.end;
+      work[0] = start;
+      work[1] = end;
       MPI_Send(work, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
     }
     else
@@ -115,10 +112,10 @@ float masterTask(long size, int nprocess)
     {
       index++;
       work_sent++;
-      Data d = getData(index, size, nprocess);
+      std::tie(start, end) = getData(index, size, nprocess);
       int work[2] = {0};
-      work[0] = d.start;
-      work[1] = d.end;
+      work[0] = start;
+      work[1] = end;
       MPI_Send(work, 2, MPI_INT, id, 0, MPI_COMM_WORLD);
     }
     else
