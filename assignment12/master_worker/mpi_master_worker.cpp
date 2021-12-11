@@ -6,19 +6,9 @@
 #include <mpi.h>
 #include <tuple>
 
-#define ARR_START_SEND 100
-#define ARR_START_RECV 100
-#define ARR_END_SEND 101
-#define ARR_END_RECV 101
-#define RESULT_TAG 1000
-#define MASTER 0
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-using namespace std;
-using namespace std::chrono;
 
 float f1(float x, int intensity);
 float f2(float x, int intensity);
@@ -29,8 +19,11 @@ float f4(float x, int intensity);
 }
 #endif
 
-#define INITIAL_WORK_REQ 1
+#define MASTER 0
 #define QUIT 1
+
+using namespace std;
+using namespace std::chrono;
 
 float getFunctionData(int functionId, float x, int intensity) {
   switch (functionId)
@@ -169,11 +162,16 @@ int main(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &nprocess);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  sscanf(argv[1], "%i", &functionId);
-  sscanf(argv[2], "%f", &a);
-  sscanf(argv[3], "%f", &b);
-  sscanf(argv[4], "%ld", &size);
-  sscanf(argv[5], "%i", &intensity);
+  // sscanf(argv[1], "%i", &functionId);
+  // sscanf(argv[2], "%f", &a);
+  // sscanf(argv[3], "%f", &b);
+  // sscanf(argv[4], "%ld", &size);
+  // sscanf(argv[5], "%i", &intensity);
+  functionId = atoi(argv[1]);
+  a = atof(argv[2]);
+  b = atof(argv[3]);
+  size = atoi(argv[4]);
+  intensity = atoi(argv[5]);
 
   high_resolution_clock::time_point start = high_resolution_clock::now();
 
