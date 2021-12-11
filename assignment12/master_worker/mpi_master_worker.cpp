@@ -32,21 +32,21 @@ float f4(float x, int intensity);
 #define INITIAL_WORK_REQ 1
 #define QUIT 1
 
-// float getFunctionData(int functionId, float x, int intensity) {
-//   switch (functionId)
-//   {
-//     case 1:
-//       return f1(x, intensity);
-//     case 2:
-//       return f2(x, intensity);
-//     case 3:
-//       return f3(x, intensity);
-//     case 4:
-//       return f4(x, intensity);
-//     default:
-//       return -1;
-//   }
-// }
+float getFunctionData(int functionId, float x, int intensity) {
+  switch (functionId)
+  {
+    case 1:
+      return f1(x, intensity);
+    case 2:
+      return f2(x, intensity);
+    case 3:
+      return f3(x, intensity);
+    case 4:
+      return f4(x, intensity);
+    default:
+      return -1;
+  }
+}
 
 float calculateIntegral(int start, int end, int functionId, int intensity, float a, float b, long n)
 {
@@ -55,20 +55,7 @@ float calculateIntegral(int start, int end, int functionId, int intensity, float
   for (int i = start; i < end; i++)
   {
     float x = (a + (i + 0.5) * width);
-    float func = 0.0f;
-    switch (functionId)
-    {
-      case 1:
-        func = f1(x, intensity);
-      case 2:
-        func =  f2(x, intensity);
-      case 3:
-        func =  f3(x, intensity);
-      case 4:
-        func =  f4(x, intensity);
-      default:
-        func =  -1;
-    }
+    float func = getFunctionData( functionId, x, intensity );
     result = result + (width * func);
   }
   return result;
